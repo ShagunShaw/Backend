@@ -1,0 +1,11 @@
+{
+  "name": "lecture-6-chai-aur-backend",
+  "version": "1.0.0",
+  "description": "From this lecture we are building a full project on backend development",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Shagun",
+  "license": "ISC"
+}
