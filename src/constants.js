@@ -1,0 +1,1 @@
+export const DB_NAME= "My_database"     // This database will actually exists in our mongoDb at the time of production, and while local development, initially at the time of development it is not present so when we execute our code, mongoDB will automatically create it and from the next time, it exists 
