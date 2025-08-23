@@ -12,10 +12,9 @@
 //                 success: false,
 //                 message: err.message
 //             }
-//             req.status(err.code  ||  500).json(json_val)        // This 'json_val' is returned to the frontend
+//             res.status(err.code  ||  500).json(json_val)        // This 'json_val' is returned to the frontend
 //         }
 // } 
-// } return
 
 
 
