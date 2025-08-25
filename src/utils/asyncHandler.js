@@ -21,11 +21,10 @@
 
 // Using the Promise method
 const asyncHandler= (func) => {
-    (req, res, next) => {
+    return (req, res, next) => {
         Promise.resolve(func(req, res, next)).catch((err) => next(err))
     }
 }
-
 
 
 export {asyncHandler}       // Same as 'export default asyncHandler', just another way to write it
