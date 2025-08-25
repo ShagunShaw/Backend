@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import jwt from "jsonwebtoken"      // tokens are generally generated only for users (when they logs in), so we need to generate tokens only here 
+import jwt from "jsonwebtoken"      // Used to generate tokens. Tokens are generally generated only for users (when they logs in), so we need to generate tokens only here 
 import bcrypt from "bcrypt"     // used to encrypt values (generally passwords)
 
 const userSchema= new mongoose.Schema({
@@ -64,7 +64,7 @@ userSchema.methods.isPasswordCorrect = async function (enteredPassword) {       
 
 userSchema.methods.generateAccessToken = function () {
     const access_token= jwt.sign(       // Used to generate token
-        {       // In this object we will define what are the information we want our token to store in it
+        {       // Payloads. In this we will define what are the information we want our token to store in it
             _id: this._id,
             email: this.email,
             username: this.username,
