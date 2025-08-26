@@ -4,10 +4,24 @@
 
 import { Router } from "express"
 import { registerUser } from "../controllers/user.controller.js"
+import { upload } from "../middlewares/multer.middleware.js"
 
 const userRouter= Router()
 
-// So overall our path would be: localhost:8000/api/v1/users/register
-userRouter.route("/register").post(registerUser)        // like we used to do na app.get(), app.post() we are doing the same thing here as now our routes are being handled by router, so this is the way of doing these things like post(), get() in a router
+// So overall our path would be: http://localhost:8000/api/v1/users/register
+userRouter.route("/register").post(         // like we used to do na app.get(), app.post() we are doing the same thing here as now our routes are being handled by router, so this is the way of doing these things like post(), get() in a router
+    upload.fields([     // This acts as a middleware which enable us to handle files which will be uploaded to our server, as we cannot handle it directly in our 'user.controller.js' file 
+        // Since we need to take two files (i.e avatar and coverImg), so we are creating two objects only
+        {
+            name: "avatar",     // This name should match with the name of variable in frontend in which our 'avatar' is being uploded
+            maxCount: 1         // 'maxCount' tells that under this section we only need 1 file to be uploaded
+        },         
+        {
+            name: "coverImage",
+            maxCount: 1
+        }
+    ]),
+    registerUser
+)        
 
 export default userRouter

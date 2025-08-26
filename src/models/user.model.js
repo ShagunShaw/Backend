@@ -51,7 +51,7 @@ const userSchema= new mongoose.Schema({
 userSchema.pre("save", async function(next) {       // Here don't define your function using arrow function () => {}, define it like this way only coz arrow functions do NOT have their own 'this'
     if(this.isModified("password") == true)         // 'isModified' is a built-in feature to check if the mentioned column has been modified/given_value_to_it or not
     {
-        this.password= bcrypt.hash(this.password, 10)       // 'bcrypt.hash' is used to encrypt our password here. Here, 10 is the number of rounds of encryption we want to apply to our password. We can give any number here
+        this.password= await bcrypt.hash(this.password, 10)       // 'bcrypt.hash' is used to encrypt our password here. Here, 10 is the number of rounds of encryption we want to apply to our password. We can give any number here
     }
     next()      // IMPORTANT to write this. It indicates that this part is done, flag it to be 'true' and move to the next part
 })      
