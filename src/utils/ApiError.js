@@ -14,7 +14,8 @@ class ApiError extends Error        // Inheritance
             this.stack= stack
         }
         else{
-            Error.captureStackTrace(this, this.constructor)
+            // See from GPT what does a stack trace looks like. Ask for an example of a stacktrace 
+            Error.captureStackTrace(this, this.constructor)     // This generates the actual stack trace string and store the value in 'stack'
         }
     }
 }
