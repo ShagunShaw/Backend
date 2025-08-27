@@ -9,6 +9,7 @@ const connectDB= async () => {          // Standard approach every time you shou
     catch(error)
     {
         console.log("MongoDb Connection Failed: ", error)
+        // throw(error)         // if we write this and not the 'process.exit(1)', then the error message of our main index.js will also be triggered, unless it will not
 
         process.exit(1)         //  Returns to the original file from where this function is called. 0: Process successful ; any number other than 0: process failed
         // Once you call process.exit(1), your Node.js process immediately exits, and no further code runs, including:  The .catch() block in index.js (main file) and Any other promises or error handlers up the chain 

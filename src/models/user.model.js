@@ -62,6 +62,7 @@ userSchema.methods.isPasswordCorrect = async function (enteredPassword) {       
     return await bcrypt.compare(enteredPassword, this.password)      // 'bcrypt.comapre' checks whether the entered password (after performing all encrytion to it) is equal to the password (encrypted waala) stored in our database or not. Returns a boolean value
 }
 
+// NOTE: All the new methods defined under '.methods' of any schema can be called only on the pre-existing user entry and not at the time of new user creation. After the new user has been created, this function can be called on the exsiting user by   'user_instance.new_method_name()' 
 userSchema.methods.generateAccessToken = function () {
     const access_token= jwt.sign(       // Used to generate token
         {       // Payloads. In this we will define what are the information we want our token to store in it
@@ -79,7 +80,7 @@ userSchema.methods.generateAccessToken = function () {
     )      
 
     return access_token
-}
+}       
 
 
 userSchema.methods.generateRefreshToken = function () {

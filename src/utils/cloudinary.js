@@ -25,7 +25,7 @@ const uploadOnCloudinary= async (localFilePath) => {
             console.log(`There is no path as ${localFilePath}. Re-check your path`)
             return null
         }
-
+        
         // Uploading 
         const response= await cloudinary.uploader.upload(localFilePath, {resource_type: "auto"})        // 'resource_type' means what kind of file we are trying to upload: image, raw, video or auto (means khud hi dekhlo kaunsa h)
 

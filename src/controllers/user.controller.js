@@ -24,7 +24,7 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
 
-    const { fullname, email, username, password } = req.body        
+    const { fullName, email, username, password } = req.body        
     // This a destructuring assignment in JS which unpacks the properties of the 'req.body' object into individual variables. This means: 'fullname' will store the value of 'req.body.fullname', 'email' will store the value of 'req.body.email' and so on.
     // Acha remember using this technique you can only handle datas, not the files. For handling files, we have a different way to handle it in 'user.routes.js' file
     console.log("Email: ", email)
@@ -38,7 +38,7 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
     // Checking if the fields have non-empty values, if yes then throw an error
-    if(fullname === "")
+    if(fullName === "")
     {
         throw new ApiError(400, "fullnname is required")        // there were many other parameters in 'ApiError', but since they had their deafult values, so for now we are not passing anything here for them
     }
@@ -70,7 +70,7 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
 
-    const existedUser= User.findOne({
+    const existedUser= await User.findOne({
         $or: [{username}, {email}]      // This is a just a way of writing: if 'username' OR 'email' is presnt then return true. '$or' represents our OR operator and the values in the two objects are the conditions to be checked 
     })
 
@@ -85,8 +85,10 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
 
-    const avatarLocalPath= req.files?.avatar[0]?.path       // If files is not present under req  ||   avatar[0] does not have anything, then it will return 'undefined' (rather than throwing an error coz we are using the ? operator), and we know that in JS 'udefined' is a falsy value
-    const coverImageLocalPath= req.files?.coverImage[0]?.path
+    const avatarLocalPath= req.files?.avatar?.[0]?.path       // If files is not present under req  ||   avatar[0] does not have anything, then it will return 'undefined' (rather than throwing an error coz we are using the ? operator), and we know that in JS 'udefined' is a falsy value
+    const coverImageLocalPath= req.files?.coverImage?.[0]?.path
+    // Wrong Syntax 1: const coverImageLocalPath= req.files?.coverImage[0]?.path            // You should give a ? after coverImage also coz if the coverImage is not present, then we won't be able to access it's value at [0] and thus it will throw an error
+    // Wrong Syntax 2: const coverImageLocalPath= req.files?.coverImage?[0]?.path           // We should always give a . after every ? while chaining in this form
 
     if(!avatarLocalPath)
     {
@@ -102,7 +104,7 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
     const avatar= await uploadOnCloudinary(avatarLocalPath)
-    const coverImage= await uploadOnCloudinary(coverImageLocalPath)
+    const coverImage= await uploadOnCloudinary(coverImageLocalPath)     // the +ve thing about cloudinary is that if our 'coverImageLocalPath' is 'undefined' (i.e. if the user has not uploaded the cover image), then it is not giving an error, it is just keeping it as it as and then we are handling this part later in this code
 
     if(!avatar)
     {
@@ -117,13 +119,19 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
     const user= await User.create({         // Now our entry has been added to our database
-        fullName: fullname,
+        fullName: fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url   ||   "" ,      // Since coverImage was a non-compulsary field so before adding the url to our database we are checking if 'coverImage' is actually present or not using the ? operator. If not, then we are storing an empty string "" there
         email: email,
         password: password,
-        username: username.toLowerCase()
+        username: username.toLowerCase() 
+        // refreshToken: User.generateRefreshToken        // You cannot call this function here at the time of user creation
     })
+
+    // Rather you can call it here like this,
+    // user.refreshToken = user.generateRefreshToken()
+    // await user.save() 
+
 
 
 
