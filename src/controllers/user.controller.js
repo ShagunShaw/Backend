@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-const registerUser= asyncHandler( async (req, res) => {
+const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'next' waala parameter bhi add hoga. But let it be for now, let's see if sir isko corrct krwate h toh
     // res.status(200).json({message: "okk"})           // This response can be viewed in our postman
 
     // Steps to be followed:
@@ -44,7 +44,7 @@ const registerUser= asyncHandler( async (req, res) => {
     }
     if(email === "")
     {
-        throw new ApiError(400, "email is required")        
+        throw new ApiError(400, "email is required")      // yh throw wala part chla jaayega asyncHandler k catch-block mei   
     }
     if(username === "")
     {
@@ -85,7 +85,7 @@ const registerUser= asyncHandler( async (req, res) => {
 
 
 
-    const avatarLocalPath= req.files?.avatar[0]?.path
+    const avatarLocalPath= req.files?.avatar[0]?.path       // If files is not present under req  ||   avatar[0] does not have anything, then it will return 'undefined' (rather than throwing an error coz we are using the ? operator), and we know that in JS 'udefined' is a falsy value
     const coverImageLocalPath= req.files?.coverImage[0]?.path
 
     if(!avatarLocalPath)
@@ -160,4 +160,4 @@ const registerUser= asyncHandler( async (req, res) => {
 })
 
 
-export {registerUser}
+export {registerUser}           // Since asyncHandler is retuning a function, so registerdUser is also a function

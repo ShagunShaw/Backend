@@ -2,7 +2,7 @@
 
 import dotenv from 'dotenv'             // from now we are using 'import' instead of 'require' for dotenv
 dotenv.config({
-    path: './env'
+    path: './.env'
 })
 
 

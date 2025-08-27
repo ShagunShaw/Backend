@@ -102,4 +102,4 @@ userSchema.methods.generateRefreshToken = function () {
 // a very small expiry like 1 day or 2 day or few hours, but the refresh_token has a higher expiry like 10 days.
 
 
-export const user= mongoose.model("User", userSchema)
+export const User= mongoose.model("User", userSchema)
