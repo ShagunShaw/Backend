@@ -4,6 +4,9 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+
+
+// Registering the USER
 const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'next' waala parameter bhi add hoga. But let it be for now, let's see if sir isko corrct krwate h toh
     // res.status(200).json({message: "okk"})           // This response can be viewed in our postman
 
@@ -130,7 +133,7 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
     // Rather you can call it here like this,
     // user.refreshToken = user.generateRefreshToken()
-    // await user.save() 
+    // await user.save({validateBeforeSave: false}) 
 
 
 
@@ -168,4 +171,124 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 })
 
 
-export {registerUser}           // Since asyncHandler is retuning a function, so registerdUser is also a function
+
+
+
+const generateAccessAndRefreshTokens= async (userId) => {
+    try 
+    {
+        const user= await User.findById(userId)
+        const generatedAccessToken= user.generateAccessToken()
+        const generatedRefreshToken= user.generateRefreshToken()
+
+        user.refreshToken= generatedRefreshToken
+        await user.save({validateBeforeSave: false})      // yha pe isko 'false' isliye kiye kyuki agr ni krte toh refresh token update krte time yh mere se baki saara required fields bhi maangta jaise password, email and all. Yha isko bol diye ki jaisa bole h waisa kro apna dimaag mtt chalao
+    
+        return {generatedAccessToken, generatedRefreshToken}
+    } 
+    catch (error) {
+        throw new ApiError(500, `Something went wrong while generating the token and the error is ${error}`)
+    }
+}
+
+
+// Logging in the USER
+const loginUser= asyncHandler(async (req, res) => {
+    // Step to be followed:
+    // 1) Bring the data from 'req.body', which the user enters for logging
+    // 2) Here we will loggin user via email or via username (any of them)
+    // 3) After getting your data (username or email), find the user in you DB
+    // 4) If the user is not found, show the error message. If found, then check if the password is
+    //    correct or not. If no, then show "Incorrect Password", else follow the below step
+    // 5) If the password is correct, then generate your access and refresh token
+    // 6) And then send these token to the user via secure Cookies.
+    // 7) And now that  every thing is done, show success message to the user: "Successfully Logged In"
+
+
+
+    const {email, username, password}= req.body       // Between username and email, the user can give only one
+
+    // Now between username and email, it's compulsory that we need one. It cannot be that user ne username and email dono hi ni diya
+    if(!username  &&  !email)
+    {
+        throw new ApiError(400, "username or email is required. Koi ek toh do")
+    }
+
+
+
+
+
+    const user= await User.findOne({
+        $or: [{username}, {email}]      // i.e. agr username h toh uss basis mei user find krdo, else agr email h toh uss basis pe user find krdo
+    })
+
+    if(!user)
+    {
+        throw new ApiError(404, "User does not exist")
+    }
+
+
+
+
+
+
+
+
+
+    const isPasswordValid= user.isPasswordCorrect(password)     // tutorial mei yha prr bhi ek await lagaya, but I dont think it's needed. Dekh lena ek baar
+    if(!isPasswordValid)
+    {
+        throw new ApiError(401, "Password is Incorrect")
+    }
+
+
+
+
+
+
+
+    const {accessToken, refreshToken}= generateAccessAndRefreshTokens(user._id)
+    // Aacha ek aur cheez, though iss function call k baad mere user mei refresh token aagya h (ya update hogya h), but still mere paas jo abhi waala
+    // user ka reference h 'user', usme yh changes abhi propagate ni hua h i.e. mere 'user' mei abhi bhi refresh token (or updated refresh token) ni aaya h.
+    // Iske baad agr hmlog 'const user= await User.findOne({ $or: [{username}, {email}] })' yh krte h then isme updated waala aa jayega
+
+
+
+
+
+
+    const updatedUser= await User.findById(user._id).select("-password -refreshToken")
+
+    const options= {
+        httpOnly: true,
+        secure: true
+    }
+
+
+    return res.status(200)
+              .cookie("accessToken", accessToken, options)
+              .cookie("refreshToken", refreshToken, options)
+              .json(new ApiResponse(200, {
+                                            user: updatedUser, accessToken, refreshToken
+                                         }, "User Logged In Successfully"))
+})
+
+
+
+
+
+// Logging out the USER
+const logoutUser= asyncHandler(async (req, res) => {
+    // Steps to be followed
+    // 1) Clear all the cookies (including our access Token and refresh Token)
+    // 2) Update the 'refreshToken' field of our user in the database to be null
+
+
+    
+})
+
+
+
+
+
+export {registerUser, loginUser, logoutUser}           // Since asyncHandler is returning a function, so registerdUser is also a function
