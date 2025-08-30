@@ -25,10 +25,10 @@ userRouter.route("/register").post(         // like we used to do na app.get(), 
     registerUser
 )        
 
-userRouter.route("/login").post(loginUser)
+userRouter.route("/login").post(upload.none() , loginUser)          // For every route, we need to inject a middleware, either with some value as above or with none() as here.  (Yh waala bug hm khud fix kiye h, yh lecture ka part ni h)
 
 // Secured Routes
-userRouter.route("/logout").post(verifyJWT, logoutUser)
+userRouter.route("/logout").post(upload.none() , verifyJWT, logoutUser)
 
 // We can also inject more than one middleware in a single route like this:
 // userRouter.route("/logout2").post(verifyJWT, middleware2, middleware3, logoutUser)           

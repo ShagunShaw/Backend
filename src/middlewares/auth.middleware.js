@@ -1,13 +1,15 @@
 import { User } from "../models/user.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
+import jwt from "jsonwebtoken"
+
 // Yha prr shyd ek part ni kiya hua h ki after the given time jb hamara access token expire hojaye and using the 
 // refresh token hume naya access token generate krna pdhe toh uss case mei kaise refresh token verify krke naya 
 // access token generate krke 'res' mei set kre. Toh dekhlo agr yh part ni kiya h toh isko ek baar khus se try krna.
 
 export const verifyJWT= asyncHandler(async (req, res, next) => {        // Middlewares mei hamesha 'next' likhna hi cahiye
     try
-    {
+    {   
         const token= req.cookies?.accessToken  ||  req.header("Authorization")?.replace("Bearer ", "")          // understand 'req.header("Authorization")?.replace("Bearer ", "")' part from GPT, mko toh samj aagya btt iska note banana possible ni th
 
         if(!token)
@@ -28,7 +30,7 @@ export const verifyJWT= asyncHandler(async (req, res, next) => {        // Middl
         }
 
         
-        req.user= user      // this re.user is a custom value that we had created of our own
+        req.user= user      // this 'req.user' is a custom value that we had created of our own. This the only syntax for writing a custom value for both 'res' and 'req' i.e. by giving an = (equal to) sign
         next()    
     } 
     catch (error) 

@@ -178,13 +178,13 @@ const generateAccessAndRefreshTokens= async (userId) => {
     try 
     {
         const user= await User.findById(userId)
-        const generatedAccessToken= user.generateAccessToken()
-        const generatedRefreshToken= user.generateRefreshToken()
+        const accessToken= user.generateAccessToken()
+        const refreshToken= user.generateRefreshToken()
 
-        user.refreshToken= generatedRefreshToken
+        user.refreshToken= refreshToken
         await user.save({validateBeforeSave: false})      // yha pe isko 'false' isliye kiye kyuki agr ni krte toh refresh token update krte time yh mere se baki saara required fields bhi maangta jaise password, email and all. Yha isko bol diye ki jaisa bole h waisa kro apna dimaag mtt chalao
     
-        return {generatedAccessToken, generatedRefreshToken}
+        return {accessToken, refreshToken}
     } 
     catch (error) {
         throw new ApiError(500, `Something went wrong while generating the token and the error is ${error}`)
@@ -205,7 +205,11 @@ const loginUser= asyncHandler(async (req, res) => {
     // 7) And now that  every thing is done, show success message to the user: "Successfully Logged In"
 
 
-
+    // if(!req.body)
+    // {
+    //     console.log(req.body ,"\n\n")
+    //     throw new ApiError(500, "req.body is undefined")
+    // }
     const {email, username, password}= req.body       // Between username and email, the user can give only one
 
     // Now between username and email, it's compulsory that we need one. It cannot be that user ne username and email dono hi ni diya
@@ -246,31 +250,33 @@ const loginUser= asyncHandler(async (req, res) => {
 
 
 
+    
+    const {accessToken, refreshToken}= await generateAccessAndRefreshTokens(user._id)       // Yha pe Refresh Token and Access Token ka naam should be same as you had given while returning values from the given function. Ni toh bahaut der phasoge
 
-    const {accessToken, refreshToken}= generateAccessAndRefreshTokens(user._id)
+
+
+
     // Aacha ek aur cheez, though iss function call k baad mere user mei refresh token aagya h (ya update hogya h), but still mere paas jo abhi waala
     // user ka reference h 'user', usme yh changes abhi propagate ni hua h i.e. mere 'user' mei abhi bhi refresh token (or updated refresh token) ni aaya h.
     // Iske baad agr hmlog 'const user= await User.findOne({ $or: [{username}, {email}] })' yh krte h then isme updated waala aa jayega
-
-
-
-
-
     
+        
     const updatedUser= await User.findById(user._id).select("-password -refreshToken")
 
     const options= {
         httpOnly: true,
-        secure: true
+        secure: true       // development k time isko false krr dena, production k time isko true krr dena. This is because development k time pe hamara url http hota h and not https, so agr isme secure: true krr denge toh yh hamare cookies ko allow ni karega    
     }
 
-
-    // the 'req' object contains both built-in values (like req.status, req.cookie, req.json) as well as values that are custom-defined (like req.user) by you or your middleware
-    return res.status(200)
+    
+    // the 'req' and 'res' object contains both built-in values (like res.status, res.cookie, res.json and values like req.body, req.params) as well as values that are custom-defined (like req.user, res.someData, etc.) by you or your middleware
+    return res.status(200)          // This the only syntax for writing a built-in value for both 'res' and 'req' i.e. by giving the value in brackets ()
               .cookie("accessToken", accessToken, options)      // to use this, you must have written 'app.use(cookieParser())' in your app.js file.  The accessToken in quotes is the name of the cookie we have given and the one without quotes, is the value of that cookie
               .cookie("refreshToken", refreshToken, options)      // You can also chain multiple values like this
               .json(new ApiResponse(200, {
-                                            user: updatedUser, accessToken, refreshToken        // See how this data is printed in our output
+                                            user: updatedUser,      // See how this data is printed in our output.
+                                            accessToken,        // Here this line simply means this -->  accessToken: accessToken        // phla waala accessToken is my key and dusra waala is my value. Now since dono ka naam same hi h so yes, we can write like this
+                                            refreshToken        
                                          }, "User Logged In Successfully"))
 })
 
@@ -284,19 +290,19 @@ const logoutUser= asyncHandler(async (req, res) => {
     // 1) Update the 'refreshToken' field of our user in the database to be null (or undefined)
     // 2) Clear all the cookies (including our access Token and refresh Token)
 
-
-    const response= await User.findByIdAndUpdate(
+    
+    const response= await User.findByIdAndUpdate( 
                                         req.user._id,       // Now req.user is not a built-in value, it's a custom value created by us
                                         {
                                             $set: {         // Remember: $or, $set  these are all methods of mongoose, not a javascript syntax
-                                                refreshToken: undefined
+                                                refreshToken: null
                                             }
                                         },
                                         {
                                             new: true       // This 'new: true' will return the updated user response (i.e. the one in which 'refreshToken' is undefined). If 'new: false', then it would have given the non-updated response
                                         }
                                     )
-
+    
 
     const options= {
         httpOnly: true,
