@@ -3,8 +3,9 @@
 // app.js we are taking a common part from app.js i.e. the "/user" and then handling it's "/register" and "/login" here
 
 import { Router } from "express"
-import { registerUser } from "../controllers/user.controller.js"
+import { registerUser, loginUser, logoutUser } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
+import { verifyJWT } from "../middlewares/auth.middleware.js"
 
 const userRouter= Router()
 
@@ -23,5 +24,15 @@ userRouter.route("/register").post(         // like we used to do na app.get(), 
     ]),
     registerUser
 )        
+
+userRouter.route("/login").post(loginUser)
+
+// Secured Routes
+userRouter.route("/logout").post(verifyJWT, logoutUser)
+
+// We can also inject more than one middleware in a single route like this:
+// userRouter.route("/logout2").post(verifyJWT, middleware2, middleware3, logoutUser)           
+// just make sure each of these middlewares should end with 'next()' , so that after one middleare has been executed, it can move to the next middleware, before going 
+// to the main function i.e. 'logoutUser' here
 
 export default userRouter

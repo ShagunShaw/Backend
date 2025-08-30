@@ -121,7 +121,7 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
 
-    const user= await User.create({         // Now our entry has been added to our database
+    const user= await User.create({         // Now our entry has been added to our database, and the 'user' will contain the reference of this data with all the fields you have mentioned here
         fullName: fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url   ||   "" ,      // Since coverImage was a non-compulsary field so before adding the url to our database we are checking if 'coverImage' is actually present or not using the ? operator. If not, then we are storing an empty string "" there
@@ -256,7 +256,7 @@ const loginUser= asyncHandler(async (req, res) => {
 
 
 
-
+    
     const updatedUser= await User.findById(user._id).select("-password -refreshToken")
 
     const options= {
@@ -265,11 +265,12 @@ const loginUser= asyncHandler(async (req, res) => {
     }
 
 
+    // the 'req' object contains both built-in values (like req.status, req.cookie, req.json) as well as values that are custom-defined (like req.user) by you or your middleware
     return res.status(200)
-              .cookie("accessToken", accessToken, options)
-              .cookie("refreshToken", refreshToken, options)
+              .cookie("accessToken", accessToken, options)      // to use this, you must have written 'app.use(cookieParser())' in your app.js file.  The accessToken in quotes is the name of the cookie we have given and the one without quotes, is the value of that cookie
+              .cookie("refreshToken", refreshToken, options)      // You can also chain multiple values like this
               .json(new ApiResponse(200, {
-                                            user: updatedUser, accessToken, refreshToken
+                                            user: updatedUser, accessToken, refreshToken        // See how this data is printed in our output
                                          }, "User Logged In Successfully"))
 })
 
@@ -277,14 +278,36 @@ const loginUser= asyncHandler(async (req, res) => {
 
 
 
-// Logging out the USER
+// Logging out the USER. For this, we need to create a new middleware.
 const logoutUser= asyncHandler(async (req, res) => {
     // Steps to be followed
-    // 1) Clear all the cookies (including our access Token and refresh Token)
-    // 2) Update the 'refreshToken' field of our user in the database to be null
+    // 1) Update the 'refreshToken' field of our user in the database to be null (or undefined)
+    // 2) Clear all the cookies (including our access Token and refresh Token)
 
 
-    
+    const response= await User.findByIdAndUpdate(
+                                        req.user._id,       // Now req.user is not a built-in value, it's a custom value created by us
+                                        {
+                                            $set: {         // Remember: $or, $set  these are all methods of mongoose, not a javascript syntax
+                                                refreshToken: undefined
+                                            }
+                                        },
+                                        {
+                                            new: true       // This 'new: true' will return the updated user response (i.e. the one in which 'refreshToken' is undefined). If 'new: false', then it would have given the non-updated response
+                                        }
+                                    )
+
+
+    const options= {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res.status(200)
+              .clearCookie("accessToken", options)      // "accessToken" is the name of the cookie that we had declared earlier
+              .clearCookie("refreshToken", options)
+              .json(new ApiResponse(200, {}, "User Logged Out Successfully"))
+
 })
 
 
