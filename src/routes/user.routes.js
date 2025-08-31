@@ -3,7 +3,7 @@
 // app.js we are taking a common part from app.js i.e. the "/user" and then handling it's "/register" and "/login" here
 
 import { Router } from "express"
-import { registerUser, loginUser, logoutUser } from "../controllers/user.controller.js"
+import { registerUser, loginUser, logoutUser, refreshAccessToken } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 
@@ -34,5 +34,9 @@ userRouter.route("/logout").post(upload.none() , verifyJWT, logoutUser)
 // userRouter.route("/logout2").post(verifyJWT, middleware2, middleware3, logoutUser)           
 // just make sure each of these middlewares should end with 'next()' , so that after one middleare has been executed, it can move to the next middleware, before going 
 // to the main function i.e. 'logoutUser' here
+
+
+
+userRouter.route("/refresh-token").post(upload.none(), refreshAccessToken)
 
 export default userRouter

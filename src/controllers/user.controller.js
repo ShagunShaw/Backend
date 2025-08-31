@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 
 
@@ -320,4 +321,64 @@ const logoutUser= asyncHandler(async (req, res) => {
 
 
 
-export {registerUser, loginUser, logoutUser}           // Since asyncHandler is returning a function, so registerdUser is also a function
+
+
+
+// Handling Session expires using refreshTokens
+// Yha pe just ek baar yh logic check krr lena ki how to check, while the user is logged in, ki uska access token expire hogya h
+// and we have to inject this method via it's route defined in user.router.js to create it's new access token and assigning toh iss
+// function k andar hi hogya h
+const refreshAccessToken= asyncHandler( async (req, res) => {
+    const incomingRefreshToken= req.cookies.refreshToken   ||   req.body.refreshToken
+
+    if(!incomingRefreshToken)
+    {
+        throw new ApiError(401, "Unauthorized Request")
+    }
+
+
+    try
+    {
+        const decodedToken= jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+
+        const user= await User.findById(decodedToken?._id)         // Here we are using ?. opearator beacause jaruri ni h ki hamare decoded token mei payloads (data) ho hi, it may be that refreshToken define krte waqt hmlog usme koi payloads na daale ho
+
+        if(!user)
+        {
+            throw new ApiError(401, "Invalid Refresh Token")
+        }
+
+
+
+        if(incomingRefreshToken !== user.refreshToken)
+        {
+            throw new ApiError(401, "Refresh Token is either expired or used")
+        }
+
+
+
+
+        const {accessToken, refreshToken}= await generateAccessAndRefreshTokens(user._id)       // yha pe logic thoda gdbd h ki new accessToken k saath yh new refreshToken bhi generate and assign krra h jo ki normal websites mei ni hota h, normal website mei sirf access token hi baar baar generate hota when it expires, but refresh token tb tk chlta h jb tk wo khud na expire ho jaye (na ki access token k expire hone pe hi update hojaye)
+
+        const options= {
+            httpOnly: true,
+            secure: true        // Remember, development k time false, production k time true
+        }
+
+        return res.status(200)
+                .cookie("accessToken", accessToken, options)
+                .cookie("refreshToken", refreshToken, options)
+                .json(new ApiResponse(
+                                        200,
+                                        {accessToken, refreshToken},
+                                        "Access Token refreshed successfully"
+                                    ))
+    }
+    catch(error)
+    {
+        throw new ApiError(401, error?.message  ||  "Something went wrong while refreshing our Access Token")
+    }
+} )
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken}           // Since asyncHandler is returning a function, so registerdUser is also a function
