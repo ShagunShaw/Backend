@@ -381,4 +381,176 @@ const refreshAccessToken= asyncHandler( async (req, res) => {
     }
 } )
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken}           // Since asyncHandler is returning a function, so registerdUser is also a function
+
+
+
+
+
+
+
+
+
+const changeCurrentPassword= asyncHandler(async (req, res) => {
+    const {oldPassword, newPassword, confirmPassword} = req.body
+
+    if(confirmPassword  !==  newPassword)
+    {
+        throw new ApiError(400, "New Password and Confirm Password are not the same")
+    }
+
+
+    const user= await User.findById(req.user?._id)      
+
+    const isPasswordCorrect = await user.isPasswordCorrect( oldPassword)
+
+
+    if(!isPasswordCorrect)
+    {
+        throw new ApiError(400, "Invalid old password")
+    }
+
+    user.password= newPassword      // yha pe password ko encrypt krne ka jarurat ni h, coz user.model mei hmlog ek pre("save") k andar apna password already encrpt krre h
+    await user.save({validateBeforeSave: false})
+
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    {},
+                                    "Password Changed Successfully"
+                                   ))
+})
+
+
+
+
+
+
+
+const getCurrentUser= asyncHandler(async (req, res) => {
+    return res.status(200)
+              .json(new ApiResponse(200, req.user, "Current user fetched successfully"))
+})
+
+
+
+
+
+const updateAccountDetails= asyncHandler(async (req, res) => {
+    const {fullName, email}= req.body
+    // Suggestion: Jitna bhi text data h that you cam update here in one function, butt agr files update krna h toh it's suggested ki uske liye ek alg function define kro, coz
+    //              jb bhi hm update krte h toh ek baar k liye pura data kind of refresh ho jaata h, toh agr files updation ko different function mei define krte h toh network pe
+    //              congestion kam hota h.
+
+    if(!fullName  &&  !email)
+    {
+        throw new ApiError(400, "At least one of fullName or email is required for updation")
+    }
+
+    if(fullName)
+    {
+        await User.findByIdAndUpdate(req.user?._id,
+                                    {
+                                        $set: {fullName: fullName}
+                                    },
+                                    {           // We may or may not give this parameter. You already know it's functionality
+                                        new: true
+                                    }         
+                                    )
+    }
+
+    if(email)        
+    {
+        await User.findByIdAndUpdate(req.user?._id,
+                                    {
+                                        $set: {email: email}
+                                    },
+                                    {new: true}         
+                                    )
+    }
+
+
+    const user= User.findById(req.user?._id).select("-password -refreshToken")
+
+    return res.status(200)
+              .json(new ApiResponse(200, user, "Account updated successfully"))
+})
+
+
+
+
+
+
+const updateUserAvatar= asyncHandler(async (req, res) => {
+    const avatarLocalPath= req.file?.path      // yha pe 'req.file' hoga 'req.files' ni coz yha sirf ek hi file upload krwa rhe h user se
+
+    if(!avatarLocalPath)
+    {
+        throw new ApiError(400, "Avatar file is missing")
+    }
+
+    const avatar= await uploadOnCloudinary(avatarLocalPath)
+
+
+    if(!avatar.url)
+    {
+        throw new ApiError(400, "Error while uploading the file on Cloudinary")
+    }
+
+    const response= await User.findByIdAndUpdate(req.user._id,
+                                 {
+                                    $set: {
+                                        avatar: avatar.url
+                                    }
+                                 },
+                                 {
+                                    new: true
+                                 }
+                                ).select("-password -refreshToken")
+    
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    response,
+                                    "Avatar updated successfully"))
+})
+
+
+
+
+
+
+const updateUserCoverImage= asyncHandler(async (req, res) => {
+    const coverLocalPath= req.file?.path      // yha pe 'req.file' hoga 'req.files' ni coz yha sirf ek hi file upload krwa rhe h user se
+
+    if(!coverLocalPath)
+    {
+        throw new ApiError(400, "Cover Image is missing")
+    }
+
+    const coverImage= await uploadOnCloudinary(coverLocalPath)
+
+
+    if(!coverImage.url)
+    {
+        throw new ApiError(400, "Error while uploading the file on Cloudinary")
+    }
+
+    const response= await User.findByIdAndUpdate(req.user._id,
+                                 {
+                                    $set: {
+                                        coverImage: coverImage.url       // '.url' likhna mtt bhulna
+                                    }
+                                 },
+                                 {
+                                    new: true
+                                 }
+                                ).select("-password -refreshToken")
+    
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    response,
+                                    "Cover Image updated successfully"))
+})
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken,        // Since asyncHandler is returning a function, so registerdUser is also a function
+    changeCurrentPassword, getCurrentUser, updateAccountDetails,
+    updateUserAvatar, updateUserCoverImage }

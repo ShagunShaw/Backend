@@ -3,7 +3,8 @@
 // app.js we are taking a common part from app.js i.e. the "/user" and then handling it's "/register" and "/login" here
 
 import { Router } from "express"
-import { registerUser, loginUser, logoutUser, refreshAccessToken } from "../controllers/user.controller.js"
+import { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword } from "../controllers/user.controller.js"
+import { getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 
@@ -37,6 +38,18 @@ userRouter.route("/logout").post(upload.none() , verifyJWT, logoutUser)
 
 
 
-userRouter.route("/refresh-token").post(upload.none(), refreshAccessToken)
+userRouter.route("/refresh-token").post(upload.none(), verifyJWT, refreshAccessToken)
+
+userRouter.route("/change-password").post(upload.none(), verifyJWT, changeCurrentPassword)
+
+userRouter.route("/get-user").post(upload.none(), verifyJWT, getCurrentUser)
+
+userRouter.route("/update-account").post(upload.none(), verifyJWT, updateAccountDetails)
+
+// Corrections need to be done in this two part for 'upload()'
+// userRouter.route("/update-avatar").post(upload.none(), verifyJWT, updateUserAvatar)
+
+// userRouter.route("/update-coverImage").post(upload.none(), verifyJWT, updateUserCoverImage)
+
 
 export default userRouter
