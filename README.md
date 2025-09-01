@@ -1,3 +1,3 @@
-In this video we are starting a project fully based on backend.
+In this project, we are creating a fully functional website, having combination of youtube and twitter, with management of API responses, integrating cookies and tokens, uploading files and images on a clouding website and retrieving it on request.
 
-## Revisit the code of src/utils/{all files} except for the 'cloudinary.js' once you are done with js tutorial to fully understand the code. (abhi BTW thoda - thoda samj aara h jb iska application dekhe user.controller.js mei, btt still last me ek baar phir pdh lena)
+For now, I am only working with the backend part. Once it gets completed, I will move to the frontend part.
