@@ -33,7 +33,7 @@ const userSchema= new mongoose.Schema({
     },
     watchHistory: [
         {
-            type: mongoose.Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,       // toh basically yha pe referenced videos ka '_id' hoga
             ref: "Video"
         }
     ],

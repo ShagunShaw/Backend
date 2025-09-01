@@ -5,6 +5,7 @@
 import { Router } from "express"
 import { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword } from "../controllers/user.controller.js"
 import { getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js"
+import { getUserChannelProfile, getWatchHistory } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 
@@ -42,14 +43,29 @@ userRouter.route("/refresh-token").post(upload.none(), verifyJWT, refreshAccessT
 
 userRouter.route("/change-password").post(upload.none(), verifyJWT, changeCurrentPassword)
 
-userRouter.route("/get-user").post(upload.none(), verifyJWT, getCurrentUser)
+userRouter.route("/current-user").get(upload.none(), verifyJWT, getCurrentUser)
 
-userRouter.route("/update-account").post(upload.none(), verifyJWT, updateAccountDetails)
 
-// Corrections need to be done in this two part for 'upload()'
-// userRouter.route("/update-avatar").post(upload.none(), verifyJWT, updateUserAvatar)
+// Here, we are writing 'patch' instead of 'post' because here we are updating a value in our database, so for updation, we use 'patch'
+userRouter.route("/update-account").patch(upload.none(), verifyJWT, updateAccountDetails)
 
-// userRouter.route("/update-coverImage").post(upload.none(), verifyJWT, updateUserCoverImage)
+
+// Yha pe phle 'verifyJWT' hoga then 'upload.single()' coz our primary condition is ki phle user logged in hona cahiye, then wo file upload krr skta h updation k liye
+// Here, we are using 'upload.single()' instead of 'upload.fields()' coz yha pe sirf ek file hi aayega by the user side
+userRouter.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
+
+
+
+userRouter.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
+// NOTE: The name under the 'upload.single()' part should match with the name that is being used for taking up the value for that particular thing in frontend
+
+
+// This one is new (as now we are sending the encoded url in this route). See this one
+userRouter.route("/channel/:username").get(verifyJWT, upload.none(), getUserChannelProfile)
+
+
+userRouter.route("/history").get(verifyJWT, upload.none(), getWatchHistory)
+// Dekh lo yha pe shyd 'get' k saath 'upload.none()' ni likhna hoga. Let's see what our output comes.
 
 
 export default userRouter

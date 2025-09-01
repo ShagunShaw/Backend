@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 
 
@@ -479,7 +480,7 @@ const updateAccountDetails= asyncHandler(async (req, res) => {
 
 
 
-
+// ToDo- while uploading new image on cloudinay, delete the old image from it
 const updateUserAvatar= asyncHandler(async (req, res) => {
     const avatarLocalPath= req.file?.path      // yha pe 'req.file' hoga 'req.files' ni coz yha sirf ek hi file upload krwa rhe h user se
 
@@ -517,7 +518,7 @@ const updateUserAvatar= asyncHandler(async (req, res) => {
 
 
 
-
+// ToDo- same as above
 const updateUserCoverImage= asyncHandler(async (req, res) => {
     const coverLocalPath= req.file?.path      // yha pe 'req.file' hoga 'req.files' ni coz yha sirf ek hi file upload krwa rhe h user se
 
@@ -551,6 +552,169 @@ const updateUserCoverImage= asyncHandler(async (req, res) => {
                                     "Cover Image updated successfully"))
 })
 
+
+
+
+
+
+
+// Yh wala part samjhne k liye subscription schema samj k aao. lecture 19
+const getUserChannelProfile= asyncHandler(async (req, res) => {
+    // Aacha now when we want to go to a channel, we are navigated to the page via url. Suppose you want to visit the page CAC, so now your url will
+    // be http://localhost:8000/users/channel= CAC (something like this). So here we will retrive which channel we want to go not via 
+    // 'req.body' but via 'req.params' (i.e. the info encoded in our url) and for this reason only we have used 'app.use(express.urlencoded())' in our app.js
+
+    const {username}= req.params
+
+    if(!username?.trim())       // Understand this part bahaut muskil ni h
+    {
+        throw new ApiError(400, "Username is missing")
+    }
+
+
+    const channel= await User.aggregate([
+        {
+            $match: {       // Basically this line is saying, find that entry from the database where 'username' is 'username.toLowerCase()'. 2nd waala username url se mila h and 1st waala database ka h
+                username: username.toLowerCase()
+            }
+        },
+
+        {
+            $lookup: {      // 'lookup' is like 'join' in mySQL. Now since we are performing the pipeline in User table, so it has automatically taken our 1st table as User
+                from: "subscriptions",  // this is our 2nd table. now we know that in mongoose, if the table name (given by us) is 'Subscription', then in database it will become 'subscriptions'. So we had given the name accordingly 
+                localField: "_id",      // Column name from the 1st table
+                foreignField: "channel",   // Column name from the 2nd table
+                as: "subscribers"       // By which name we want to use this data further in our pipeline
+            }
+        }, 
+
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"  // dekho yha pe thoda naam ulta de diya h 'subscribers' k jgh 'subscribedTo' hoga and vice-versa. But for the timing hm aise hi chla lete h
+            }
+        },
+
+        {
+            $addFields: {       // in this we can define some custom fields 
+                subscribersCount: {
+                    $size: "$subscribers"       // '$size' is same as 'count()' in mySQl
+                },
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"      // Now since 'subscribers' and 'subscribedTo' are fileds now, we are giving a $ sign before their name
+                }, 
+                isSubscribed: {     // this column will show that the channel the user is visiting, is susbcribed by the user itself or not
+                    $cond: {        // Conditional sattement
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]},       // Will give the condition here
+                            // The above line says that check if the _id of the currnt user (got by req.user) is present in 'subscriber' sub-column of 'subscribers' column. Ab samj jaao.
+                        then: true,     // if the condition is true, then assign 'isSubscribed= true'
+                        else: false      // if the condition is false, then assign 'isSubscribed= false'
+                    }
+                }
+            }
+        },
+
+        {
+            $project: {     // using this we'll specify the fields which we want to get in our final output (as we don't want all of them)
+                fullName: 1,        // It's like a flag here: 1 for true, 0 for false
+                username: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,      // we can write 1 here or simply we just don't write this field as default is 1 (same for all fields with value 1)
+                password: 0,     
+                email: 1,
+                refreshToken: 0
+            }
+        }
+    ])  // Ask in chatGPT to show with an example hwo the fianl output will look like. Then you'll properly understand
+
+
+    if(!channel?.length)
+    {
+        throw new ApiError(404, "Channel does not exists")
+    }
+
+    console.log(channel)        // Note: 'channel' is an array of objects (we can have multiple objects in this array but for this case we have only one)
+
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    channel[0],
+                                    `Channel ${channel[0].username} fetched successfully`))
+})
+
+
+
+
+
+
+
+
+const getWatchHistory= asyncHandler(async (req, res) => {
+
+    // yh wala aggregation pipeline ek baar samj lena, hard ni h bss thoda in-depth h. Or ek baar lecture 21 hi dekhlo samj jaaogi
+    const user= await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)      // Why are writing like this instead of just 'req.user._id'. Now for the answer refer to video lecture 21 from 5.00 to 8.00 timestamp. It's interesting
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",     // will overwrite our 'watchHistory' field. I.e. jo 'whatchHistory' field mei phle sirf '_id' th, usme ab uss '_id' ka reference waale video ka pura detail hoga
+                pipeline: [     // creating a sub-pipeline for our new 'watchHistory' column
+                    {
+                        $lookup: {      // Creating a 'sub-join' inside this bigger 'join'
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner", 
+                            pipeline: [     // Creating a sub-pipeline for our new 'owner' field
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1,
+                                        password: 0,
+                                        refreshToken: 0
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"        // get the first element of this 'owner' field as the 'owner' field is an array of objects, and in our case it has only one element in it
+                            }
+                        }
+                    }
+                ]
+                // , pipeline: [.....]      // We can also write multiple pipelines for the same field like this, or we can create a nested pipeline as we had done above
+            }
+        }
+    ])      // Ask gpt to give an example of what the output will look like
+
+    console.log("\nYour entire user details is ", user)
+    console.log("\n\nAnd just your user's watch history is ", user, "\n\n")
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    user[0].watchHistory,   // Bekar mei pura user info bhjne k jgh hmlog uska sirf watch history hi bhjre h (and eventually that's what needed)
+                                    `Watch history of ${user[0].username} fetched successfully`                      
+                                   ))
+})
+
+
+
 export {registerUser, loginUser, logoutUser, refreshAccessToken,        // Since asyncHandler is returning a function, so registerdUser is also a function
     changeCurrentPassword, getCurrentUser, updateAccountDetails,
-    updateUserAvatar, updateUserCoverImage }
+    updateUserAvatar, updateUserCoverImage, getUserChannelProfile,
+    getWatchHistory }
