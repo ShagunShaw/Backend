@@ -19,7 +19,7 @@ export const verifyJWT= asyncHandler(async (req, res, next) => {        // Middl
 
 
 
-        const decodedToken= await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)            // So iss 'decodedToken' k andar wo payloads aa jayega jiske basis pe hmlog access token banaye th
+        const decodedToken= await jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)            // So iss 'decodedToken' k andar wo payloads aa jayega jiske basis pe hmlog access token banaye th. Also this line will verify whether our access token has expired or not. If yes, then it will throw an error which will be caught in the catch block below
 
         const user= await User.findById(decodedToken?._id)      // This _id is not from the database, it's from the key we had given for our '_id' of our database while creating the JWT Token
                 .select("-password -refreshToken")
@@ -35,6 +35,47 @@ export const verifyJWT= asyncHandler(async (req, res, next) => {        // Middl
     } 
     catch (error) 
     {
+        if(error?.message === "jwt expired")  
+        {
+            throw new ApiError(401, "Your access token has expired. Please call the /refresh-token path to continue.")
+        }
+
+        throw new ApiError(401,  error?.message  ||  "Something went wrong while authentication")
+    }
+})
+
+
+
+export const verifyJWT_forRefreshToken= asyncHandler(async (req, res, next) => {        // Middlewares mei hamesha 'next' likhna hi cahiye
+    try
+    {   
+        const token= req.cookies?.refreshToken          
+        if(!token)
+        {
+            throw new ApiError(401, "Unauthorized Request as we cannot find any refresh token")
+        }
+
+
+
+        const decodedToken= await jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)            // So iss 'decodedToken' k andar wo payloads aa jayega jiske basis pe hmlog access token banaye th. Also this line will verify whether our access token has expired or not. If yes, then it will throw an error which will be caught in the catch block below
+
+        const user= await User.findById(decodedToken?._id)      // This _id is not from the database, it's from the key we had given for our '_id' of our database while creating the JWT Token
+                .select("-password -refreshToken")
+
+        if(!user)
+        {
+            throw new ApiError(401, "Invalid Refresh Token")
+        }
+
+        next()    
+    } 
+    catch (error) 
+    {
+        if(error?.message === "jwt expired")  
+        {
+            throw new ApiError(401, "Your refresh token has also been expired. Please login again this time to continue.")
+        }
+
         throw new ApiError(401,  error?.message  ||  "Something went wrong while authentication")
     }
 })

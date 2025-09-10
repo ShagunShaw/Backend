@@ -194,6 +194,21 @@ const generateAccessAndRefreshTokens= async (userId) => {
 }
 
 
+const generateOnlyAccessToken= async (userId) => {
+    try 
+    {
+        const user= await User.findById(userId)
+        const accessToken= user.generateAccessToken()
+
+
+        return {accessToken}
+    } 
+    catch (error) {
+        throw new ApiError(500, `Something went wrong while generating the new access token and the error is ${error}`)
+    }
+}
+
+
 // Logging in the USER
 const loginUser= asyncHandler(async (req, res) => {
     // Step to be followed:
@@ -267,7 +282,7 @@ const loginUser= asyncHandler(async (req, res) => {
 
     const options= {
         httpOnly: true,
-        secure: true       // development k time isko false krr dena, production k time isko true krr dena. This is because development k time pe hamara url http hota h and not https, so agr isme secure: true krr denge toh yh hamare cookies ko allow ni karega    
+        secure: false       // development k time isko false krr dena, production k time isko true krr dena. This is because development k time pe hamara url http hota h and not https, so agr isme secure: true krr denge toh yh hamare cookies ko allow ni karega    
     }
 
     
@@ -334,7 +349,7 @@ const refreshAccessToken= asyncHandler( async (req, res) => {
 
     if(!incomingRefreshToken)
     {
-        throw new ApiError(401, "Unauthorized Request")
+        throw new ApiError(401, "Unauthorized Request as no refresh token is present")
     }
 
 
@@ -360,19 +375,18 @@ const refreshAccessToken= asyncHandler( async (req, res) => {
 
 
 
-        const {accessToken, refreshToken}= await generateAccessAndRefreshTokens(user._id)       // yha pe logic thoda gdbd h ki new accessToken k saath yh new refreshToken bhi generate and assign krra h jo ki normal websites mei ni hota h, normal website mei sirf access token hi baar baar generate hota when it expires, but refresh token tb tk chlta h jb tk wo khud na expire ho jaye (na ki access token k expire hone pe hi update hojaye)
+        const {accessToken}= await generateOnlyAccessToken(user._id)       // Yha pe Access Token ka naam should be same as you had given while returning values from the given function. Ni toh bahaut der phasoge
 
         const options= {
             httpOnly: true,
-            secure: true        // Remember, development k time false, production k time true
+            secure: false        // Remember, development k time false, production k time true
         }
 
         return res.status(200)
                 .cookie("accessToken", accessToken, options)
-                .cookie("refreshToken", refreshToken, options)
                 .json(new ApiResponse(
                                         200,
-                                        {accessToken, refreshToken},
+                                        {accessToken},
                                         "Access Token refreshed successfully"
                                     ))
     }
