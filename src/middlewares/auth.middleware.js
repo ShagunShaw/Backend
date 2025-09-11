@@ -31,7 +31,7 @@ export const verifyJWT= asyncHandler(async (req, res, next) => {        // Middl
 
         
         req.user= user      // this 'req.user' is a custom value that we had created of our own. This the only syntax for writing a custom value for both 'res' and 'req' i.e. by giving an = (equal to) sign
-        next()    
+        next()    // Important to write next() in the end while defining any middleware
     } 
     catch (error) 
     {

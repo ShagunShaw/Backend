@@ -16,4 +16,5 @@ const Storage= multer.diskStorage({         // Here, we had two options: i) disk
 })
 
 
+// 'upload' does not require you to explicitly call next(), because it's not an ordinary middleware function, it is multer's middleware which handles the 'next()' internally
 export const upload= multer({storage: Storage})

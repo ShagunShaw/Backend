@@ -256,7 +256,7 @@ const loginUser= asyncHandler(async (req, res) => {
 
 
 
-    const isPasswordValid= user.isPasswordCorrect(password)     // tutorial mei yha prr bhi ek await lagaya, but I dont think it's needed. Dekh lena ek baar
+    const isPasswordValid= await user.isPasswordCorrect(password)     // tutorial mei yha prr bhi ek await lagaya, but I dont think it's needed. Dekh lena ek baar
     if(!isPasswordValid)
     {
         throw new ApiError(401, "Password is Incorrect")
@@ -414,7 +414,7 @@ const changeCurrentPassword= asyncHandler(async (req, res) => {
     }
 
 
-    const user= await User.findById(req.user?._id)      
+    const user= await User.findById(req.user?._id)    
 
     const isPasswordCorrect = await user.isPasswordCorrect( oldPassword)
 
@@ -426,7 +426,6 @@ const changeCurrentPassword= asyncHandler(async (req, res) => {
 
     user.password= newPassword      // yha pe password ko encrypt krne ka jarurat ni h, coz user.model mei hmlog ek pre("save") k andar apna password already encrpt krre h
     await user.save({validateBeforeSave: false})
-
 
     return res.status(200)
               .json(new ApiResponse(200,
@@ -461,6 +460,7 @@ const updateAccountDetails= asyncHandler(async (req, res) => {
         throw new ApiError(400, "At least one of fullName or email is required for updation")
     }
 
+    
     if(fullName)
     {
         await User.findByIdAndUpdate(req.user?._id,
@@ -473,8 +473,15 @@ const updateAccountDetails= asyncHandler(async (req, res) => {
                                     )
     }
 
+    
     if(email)        
     {
+        if(!email.includes("@")  ||   !email.includes(".com"))
+        {
+            throw new ApiError(400, "Check your new email format")
+        }
+        
+
         await User.findByIdAndUpdate(req.user?._id,
                                     {
                                         $set: {email: email}
@@ -484,7 +491,7 @@ const updateAccountDetails= asyncHandler(async (req, res) => {
     }
 
 
-    const user= User.findById(req.user?._id).select("-password -refreshToken")
+    const user= await User.findById(req.user?._id).select("-password -refreshToken")
 
     return res.status(200)
               .json(new ApiResponse(200, user, "Account updated successfully"))
@@ -575,7 +582,7 @@ const updateUserCoverImage= asyncHandler(async (req, res) => {
 // Yh wala part samjhne k liye subscription schema samj k aao. lecture 19
 const getUserChannelProfile= asyncHandler(async (req, res) => {
     // Aacha now when we want to go to a channel, we are navigated to the page via url. Suppose you want to visit the page CAC, so now your url will
-    // be http://localhost:8000/users/channel= CAC (something like this). So here we will retrive which channel we want to go not via 
+    // be http://localhost:8000/api/v1/users/channel/CAC (this one is tried & tested). So here we will retrive which channel we want to go not via 
     // 'req.body' but via 'req.params' (i.e. the info encoded in our url) and for this reason only we have used 'app.use(express.urlencoded())' in our app.js
 
     const {username}= req.params
@@ -585,7 +592,7 @@ const getUserChannelProfile= asyncHandler(async (req, res) => {
         throw new ApiError(400, "Username is missing")
     }
 
-
+    // yh pipelines ek baar aache se samj lena (pura course krne ka jarurat ni h just ek basic understanding rakhna)
     const channel= await User.aggregate([
         {
             $match: {       // Basically this line is saying, find that entry from the database where 'username' is 'username.toLowerCase()'. 2nd waala username url se mila h and 1st waala database ka h
@@ -639,9 +646,9 @@ const getUserChannelProfile= asyncHandler(async (req, res) => {
                 isSubscribed: 1,
                 avatar: 1,
                 coverImage: 1,      // we can write 1 here or simply we just don't write this field as default is 1 (same for all fields with value 1)
-                password: 0,     
+                // password: 0,     // But note that in '$project' either we can Include the fields you want (with 1), or Exclude the fields you don't want (with 0). You cannot do both at the same time
                 email: 1,
-                refreshToken: 0
+                // refreshToken: 0
             }
         }
     ])  // Ask in chatGPT to show with an example hwo the fianl output will look like. Then you'll properly understand
@@ -696,8 +703,8 @@ const getWatchHistory= asyncHandler(async (req, res) => {
                                         fullName: 1,
                                         username: 1,
                                         avatar: 1,
-                                        password: 0,
-                                        refreshToken: 0
+                                        // password: 0,
+                                        // refreshToken: 0
                                     }
                                 }
                             ]

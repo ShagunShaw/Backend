@@ -41,12 +41,13 @@ userRouter.route("/logout").post(verifyJWT, upload.none(), logoutUser)
 
 userRouter.route("/refresh-token").post(upload.none(), verifyJWT_forRefreshToken, refreshAccessToken)
 
-userRouter.route("/change-password").post(upload.none(), verifyJWT, changeCurrentPassword)
+userRouter.route("/change-password").patch(verifyJWT, upload.none(), changeCurrentPassword)
 
 userRouter.route("/current-user").get(upload.none(), verifyJWT, getCurrentUser)
 
 
 // Here, we are writing 'patch' instead of 'post' because here we are updating a value in our database, so for updation, we use 'patch'
+// Both 'put' and 'patch' are used for updating a value in our databse, but they have different semantics: 'put' is used when you want to completely replace an existing data with new data (full update) and 'patch' is used when you want to make partial updates to an existing data, i.e. only update specific fields without affecting the other fields
 userRouter.route("/update-account").patch(upload.none(), verifyJWT, updateAccountDetails)
 
 
