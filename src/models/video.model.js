@@ -26,9 +26,10 @@ const videoSchema= new mongoose.Schema({
         type: Number,
         default: 0
     },
-    isPublished: {
-        type: Boolean,
-        default: true
+    playlist: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Playlist",
+        default: "NONE"
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,

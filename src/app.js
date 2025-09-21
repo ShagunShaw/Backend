@@ -21,10 +21,18 @@ app.use(cookieParser())         // To set and access cookies on my server
 
 
 // routes import
+import refreshTokenRouter from "./routes/refresh-token.routes.js"
 import userRouter from "./routes/user.routes.js"
+import commentRouter from "./routes/comment.routes.js"
+import videoRouter from "./routes/video.routes.js"
+
 
 // routes declaration
 // Here, we are declaring it has "/api/v1/users" because of the standard industry practice, you could have also written as "/users" also
+app.use("/", refreshTokenRouter)
 app.use("/api/v1/users", userRouter)       // Earlier we used to do app.get() for handling such routes before all our code was in a single file. But now that our routes ad controllers are seggregated, we can cannot use them by app.get(), instead we have to now use them a middlewares using app.use() 
+app.use("/api/v1/comments", commentRouter)
+app.use("/api/v1/videos", videoRouter)
+
 
 export default app
