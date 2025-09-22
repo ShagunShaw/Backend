@@ -25,6 +25,8 @@ import refreshTokenRouter from "./routes/refresh-token.routes.js"
 import userRouter from "./routes/user.routes.js"
 import commentRouter from "./routes/comment.routes.js"
 import videoRouter from "./routes/video.routes.js"
+import playlistRouter from "./routes/playlist.routes.js"
+import tweetRouter from "./routes/tweet.routes.js"
 
 
 // routes declaration
@@ -33,6 +35,8 @@ app.use("/", refreshTokenRouter)
 app.use("/api/v1/users", userRouter)       // Earlier we used to do app.get() for handling such routes before all our code was in a single file. But now that our routes ad controllers are seggregated, we can cannot use them by app.get(), instead we have to now use them a middlewares using app.use() 
 app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/videos", videoRouter)
+app.use("/api/v1/playlists", playlistRouter)
+app.use("/api/v1/tweets", tweetRouter)
 
 
 export default app

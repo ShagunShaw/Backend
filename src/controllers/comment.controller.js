@@ -33,7 +33,7 @@ export const addCommentOnVideo= asyncHandler(async (req, res) => {
     })
 
     res.status(201)
-       .json(new ApiResponse(201, "Comment added successfully", newComment))
+       .json(new ApiResponse(201, newComment, "Comment added successfully"))
 })
 
 
@@ -57,7 +57,7 @@ export const getAllCommentsOfVideo= asyncHandler(async (req, res) => {
                                   .sort({ createdAt: -1 })                     // Sort kr rhe h comments ko according to 'createdAt' in descending order, so that latest comment appears at the top
 
     res.status(200)
-       .json(new ApiResponse(200, "Comments fetched successfully", comments))
+       .json(new ApiResponse(200, comments, "Comments fetched successfully"))
 }
 )
 
@@ -96,7 +96,7 @@ export const editComment= asyncHandler(async (req, res) => {
     }
 
     res.status(200)
-       .json(new ApiResponse(200, "Comment updated successfully", updatedComment))
+       .json(new ApiResponse(200, updatedComment, "Comment updated successfully"))
 }
 )
 
@@ -127,6 +127,6 @@ export const deleteComment= asyncHandler(async (req, res) => {
     }
 
     res.status(200)
-       .json(new ApiResponse(200, "Comment deleted successfully", deletedComment))
+       .json(new ApiResponse(200, deletedComment, "Comment deleted successfully"))
 }
 )

@@ -9,6 +9,10 @@ const playlistSchema= new Schema({
         type: String,
         required: true
     },
+    thumbnail: {        // This thumbnail is nothing but the thumbnail of the first video in the playlist
+        type: String,
+        required: true
+    },
     videos: [
         {
             type: Schema.Types.ObjectId,

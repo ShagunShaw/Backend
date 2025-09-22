@@ -3,6 +3,8 @@ import { ApiError } from "../utils/apiError";
 import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js"
+import fs from "fs/promises"
 
 
 export const getVideosByRecommendation= asyncHandler(async (req, res) => {
@@ -26,7 +28,7 @@ export const getAllVideosOfUser= asyncHandler(async (req, res) => {
     }
 
     res.status(200)
-       .json(new ApiResponse(200, "Videos fetched successfully", videos))
+       .json(new ApiResponse(200, videos, "Videos fetched successfully"))
 })
 
 
@@ -45,7 +47,7 @@ export const getVideoById= asyncHandler(async (req, res) => {
     }
 
     res.status(200)
-       .json(new ApiResponse(200, "Video fetched successfully", video))
+       .json(new ApiResponse(200, video, "Video fetched successfully"))
 })
 
 
@@ -97,7 +99,7 @@ export const uploadVideo= asyncHandler(async (req, res) => {
     })
 
     res.status(201)
-       .json(new ApiResponse(201, "Video uploaded successfully", newVideo))
+       .json(new ApiResponse(201, newVideo, "Video uploaded successfully"))
 })
 
 
@@ -121,6 +123,26 @@ export const deleteVideoById= asyncHandler(async (req, res) => {
         throw new ApiError(403, "You are not authorized to delete this video")
     }
 
+    // To delete video and thumbnail from cloudinary as well
+    const videoPublicIdMatch = video.videoFile.match(/\/([^/]+)\.[a-zA-Z]+$/);
+    const thumbnailPublicIdMatch = video.thumbnail.match(/\/([^/]+)\.[a-zA-Z]+$/);
+
+    if (videoPublicIdMatch && videoPublicIdMatch[1]) {
+        const videoPublicId = videoPublicIdMatch[1];
+        const deletedVideoFromCloudinary = await deleteFromCloudinary(videoPublicId);
+        if (!deletedVideoFromCloudinary) {
+            throw new ApiError(500, "Error deleting video from Cloudinary");
+        }
+    }
+
+    if (thumbnailPublicIdMatch && thumbnailPublicIdMatch[1]) {
+        const thumbnailPublicId = thumbnailPublicIdMatch[1];
+        const deletedThumbnailFromCloudinary = await deleteFromCloudinary(thumbnailPublicId);
+        if (!deletedThumbnailFromCloudinary) {
+            throw new ApiError(500, "Error deleting thumbnail from Cloudinary");
+        }
+    }
+
     const deletedVideo= await Video.findByIdAndDelete(videoId)
     if(!deletedVideo)
     {
@@ -128,7 +150,7 @@ export const deleteVideoById= asyncHandler(async (req, res) => {
     }
 
     res.status(200)
-       .json(new ApiResponse(200, "Video deleted successfully", deletedVideo))
+       .json(new ApiResponse(200, deletedVideo, "Video deleted successfully"))
 })
 
 
@@ -173,7 +195,6 @@ export const updateVideoById= asyncHandler(async (req, res) => {
 
         if (publicIdMatch && publicIdMatch[1]) {
             const publicId = publicIdMatch[1];
-
             const deletedTThumbnail = await deleteFromCloudinary(publicId);
             if (!deletedTThumbnail) {
                 throw new ApiError(500, "Error deleting previous thumbnail, aborting update");
@@ -199,5 +220,5 @@ export const updateVideoById= asyncHandler(async (req, res) => {
 
 
     res.status(200)
-       .json(new ApiResponse(200, "Video updated successfully", updatedVideo))
+       .json(new ApiResponse(200, updatedVideo, "Video updated successfully"))
 })
