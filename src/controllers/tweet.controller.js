@@ -1,16 +1,16 @@
 import { asyncHandler } from "../utils/asyncHandler.js";    
-import Tweet from "../models/tweet.model.js";
-import { apiError } from "../utils/apiError.js";
-import { apiResponse } from "../utils/apiResponse.js";
+import { Tweet } from "../models/tweet.model.js";
+import { ApiError } from "../utils/apiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { deleteFromCloudinary } from "../utils/cloudinary.js";
+import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
 import fs from "fs";
 
 
 export const createTweet = asyncHandler(async (req, res, next) => {
     const { content } = req.body;
     if(!content){
-        return next(new apiError(400, "Content is required"))
+        return next(new ApiError(400, "Content is required"))
     }
 
     let image = null;
@@ -20,7 +20,7 @@ export const createTweet = asyncHandler(async (req, res, next) => {
 
         image = await uploadOnCloudinary(uploadedImage);
         if(!image){
-            return next(new apiError(400, "Image upload failed"))
+            return next(new ApiError(400, "Image upload failed"))
         }
 
         fs.unlinkSync(uploadedImage)  
@@ -33,7 +33,7 @@ export const createTweet = asyncHandler(async (req, res, next) => {
     })
 
     res.status(201)
-       .json(new apiResponse(201, tweet, "Tweet created successfully"))
+       .json(new ApiResponse(201, tweet, "Tweet created successfully"))
 })
 
 
@@ -44,7 +44,7 @@ export const getAllTweetsByID = asyncHandler(async (req, res, next) => {
                               .sort({ createdAt: -1 })
 
     res.status(200)
-       .json(new apiResponse(200, tweets, "Tweets fetched successfully"))
+       .json(new ApiResponse(200, tweets, "Tweets fetched successfully"))
 })
 
 
@@ -55,7 +55,7 @@ export const getAllTweetsOfUser = asyncHandler(async (req, res, next) => {
                               .sort({ createdAt: -1 })
 
     res.status(200)
-       .json(new apiResponse(200, tweets, "Your tweets are fetched successfully"))
+       .json(new ApiResponse(200, tweets, "Your tweets are fetched successfully"))
 })
 
 
@@ -65,16 +65,16 @@ export const updateTweetByID = asyncHandler(async (req, res, next) => {
 
     const tweet = await Tweet.findById(tweetId)
     if(!tweet){
-        return next(new apiError(404, "Tweet of this ID not found"))
+        return next(new ApiError(404, "Tweet of this ID not found"))
     }
 
     if(tweet.owner.toString() !== user._id.toString()){
-        return next(new apiError(403, "You are not authorized to update this tweet"))
+        return next(new ApiError(403, "You are not authorized to update this tweet"))
     }
 
     const { content } = req.body;
     if(!content){
-        return next(new apiError(400, "Content is required"))
+        return next(new ApiError(400, "Content is required"))
     }
 
     const image= null;
@@ -84,7 +84,7 @@ export const updateTweetByID = asyncHandler(async (req, res, next) => {
         image = await uploadOnCloudinary(uploadedImage);
 
         if(!image){
-            return next(new apiError(400, "Image upload failed"))
+            return next(new ApiError(400, "Image upload failed"))
         }
 
         fs.unlinkSync(uploadedImage)
@@ -105,7 +105,7 @@ export const updateTweetByID = asyncHandler(async (req, res, next) => {
     await tweet.save();
 
     res.status(200)
-       .json(new apiResponse(200, tweet, "Tweet updated successfully"))
+       .json(new ApiResponse(200, tweet, "Tweet updated successfully"))
 })
 
 
@@ -115,11 +115,11 @@ export const deleteTweetByID = asyncHandler(async (req, res, next) => {
 
     const tweet = await Tweet.findById(tweetId)
     if(!tweet){
-        return next(new apiError(404, "Tweet of this ID not found"))
+        return next(new ApiError(404, "Tweet of this ID not found"))
     }
 
     if(tweet.owner.toString() !== user._id.toString()){
-        return next(new apiError(403, "You are not authorized to delete this tweet"))
+        return next(new ApiError(403, "You are not authorized to delete this tweet"))
     }
 
     // To delete the previous image from cloudinary
@@ -131,5 +131,5 @@ export const deleteTweetByID = asyncHandler(async (req, res, next) => {
     await tweet.remove();
 
     res.status(200)
-       .json(new apiResponse(200, null, "Tweet deleted successfully"))
+       .json(new ApiResponse(200, null, "Tweet deleted successfully"))
 })

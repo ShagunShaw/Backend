@@ -32,13 +32,19 @@ import likeRouter from "./routes/like.routes.js"
 
 // routes declaration
 // Here, we are declaring it has "/api/v1/users" because of the standard industry practice, you could have also written as "/users" also
-app.use("/", refreshTokenRouter)
+app.use("/api/v1/users/", refreshTokenRouter)   // refresh token wala part ko alg se likhre h coz it is used not just under user (though written under user only), but is alos used in many other sections also 
+
 app.use("/api/v1/users", userRouter)       // Earlier we used to do app.get() for handling such routes before all our code was in a single file. But now that our routes ad controllers are seggregated, we can cannot use them by app.get(), instead we have to now use them a middlewares using app.use() 
 app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/videos", videoRouter)
 app.use("/api/v1/playlists", playlistRouter)
 app.use("/api/v1/tweets", tweetRouter)
 app.use("/api/v1/likes", likeRouter)
+
+
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
 
 
 export default app

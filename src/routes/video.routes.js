@@ -28,10 +28,10 @@ videoRouter.route("/upload-video").put(verifyJWT, upload.fields([
 ]), videoController.uploadVideo)
 
 
-videoRouter.route("/delete-video/:videoId").delete(verifyJWT, upload.none(), videoController.deleteVideo)
+videoRouter.route("/delete-video/:videoId").delete(verifyJWT, upload.none(), videoController.deleteVideoById)
 
 
-videoRouter.route("/update-video-metadata/:videoId").patch(verifyJWT, upload.none(), videoController.updateVideoMetadata)
+videoRouter.route("/update-video-metadata/:videoId").patch(verifyJWT, upload.single('thumbnail'), videoController.updateVideoById)
 
 
 export default videoRouter;

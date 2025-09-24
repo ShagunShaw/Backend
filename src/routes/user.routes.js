@@ -62,8 +62,10 @@ userRouter.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), u
 userRouter.route("/channel/:username").get(verifyJWT, upload.none(), getUserChannelProfile)
 
 
-userRouter.route("/history").get(verifyJWT, upload.none(), getWatchHistory)
+userRouter.route("/history").get(verifyJWT, getWatchHistory)
 // Dekh lo yha pe shyd 'get' k saath 'upload.none()' ni likhna hoga. Let's see what our output comes.
 
+
+// TODO: Add a route for updating the watch history of a user, along with the new videos he watched. So basically, whenever a user watches a new video, that video should be added to his watch history.
 
 export default userRouter

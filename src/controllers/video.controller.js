@@ -1,10 +1,9 @@
-import {  asyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/apiError";
+import {  asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/apiError.js";
 import { Video } from "../models/video.model.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js"
-import fs from "fs/promises"
 
 
 export const getVideosByRecommendation= asyncHandler(async (req, res) => {
@@ -20,7 +19,7 @@ export const getAllVideosOfUser= asyncHandler(async (req, res) => {
         throw new ApiError(400, "User id is required")
     }
 
-    const videos= await Video.find({ owner: userId, playlist: "NONE" }).sort({ createdAt: -1 })        // -1 means descending order
+    const videos= await Video.find({ owner: userId, playlist: null }).sort({ createdAt: -1 })        // -1 means descending order
 
     if(!videos)
     {
@@ -56,7 +55,7 @@ export const uploadVideo= asyncHandler(async (req, res) => {
     {
         throw new ApiError(401, "You must be logged in to upload video")
     }
-    const { user }= req.user
+    const user= req.user
 
     const { title, description }= req.body
 
@@ -71,7 +70,7 @@ export const uploadVideo= asyncHandler(async (req, res) => {
         throw new ApiError(400, "Video file and thumbnail are required")
     }
 
-    const videoFile= req.file?.videoFile?.[0]?.path
+    const videoFile= req.files?.videoFile?.[0]?.path
     const thumbnail= req.files?.thumbnail?.[0]?.path
 
 
@@ -79,14 +78,15 @@ export const uploadVideo= asyncHandler(async (req, res) => {
     const uploadVideo= await uploadOnCloudinary(videoFile)
     const uploadThumbnail= await uploadOnCloudinary(thumbnail)
 
-    if(!uploadVideo || !uploadThumbnail)
+    if(!uploadVideo)
     {
-        throw new ApiError(500, "Error uploading video or thumbnail")
+        throw new ApiError(500, "Error uploading video")
     }
 
-
-    await fs.unlink(videoFile)         
-    await fs.unlink(thumbnail)         
+    if(!uploadThumbnail)
+    {
+        throw new ApiError(500, "Error uploading thumbnail")
+    }
 
 
     const newVideo= await Video.create({
@@ -105,7 +105,7 @@ export const uploadVideo= asyncHandler(async (req, res) => {
 
 export const deleteVideoById= asyncHandler(async (req, res) => {
     const { videoId }= req.params
-    const { user }= req.user
+    const user= req.user
 
     if(!videoId)
     {
@@ -124,8 +124,9 @@ export const deleteVideoById= asyncHandler(async (req, res) => {
     }
 
     // To delete video and thumbnail from cloudinary as well
-    const videoPublicIdMatch = video.videoFile.match(/\/([^/]+)\.[a-zA-Z]+$/);
+    const videoPublicIdMatch = video.videoFile.match(/\/v\d+\/([a-zA-Z0-9]+)\.mp4/);        // thumbnail and video file ka regex alg hoga
     const thumbnailPublicIdMatch = video.thumbnail.match(/\/([^/]+)\.[a-zA-Z]+$/);
+
 
     if (videoPublicIdMatch && videoPublicIdMatch[1]) {
         const videoPublicId = videoPublicIdMatch[1];
@@ -156,13 +157,13 @@ export const deleteVideoById= asyncHandler(async (req, res) => {
 
 export const updateVideoById= asyncHandler(async (req, res) => {
     const { videoId }= req.params
-    const { user }= req.user
+    const user= req.user
 
     if(!videoId)
     {
         throw new ApiError(400, "Video id is missing")
     }   
-
+    
     const video= await Video.findById(videoId)
     if(!video)
     {
@@ -174,15 +175,16 @@ export const updateVideoById= asyncHandler(async (req, res) => {
         throw new ApiError(403, "You are not authorized to update details of this video")
     }
 
-
+ 
     const { title, description }= req.body
-    const thumbnail= req.file?.thumbnail?.[0]?.path;
+    const thumbnail= req.file?.path;        // Note: updating thumbnail is optional
 
     // Yha pe frontend pe jb user update krne jaega, toh uska already exisiting title and description wha present hoag, bss wo wha pe usko edit krr skta h
     if(title === "" || description === "")
     {
         throw new ApiError(400, "Title and description cannot be empty")
     }
+    
 
     let uploadedThumbnail= null
     if(thumbnail)
@@ -192,7 +194,7 @@ export const updateVideoById= asyncHandler(async (req, res) => {
 
         // Extract public_id from the previous thumbnail URL
         const publicIdMatch = prevThumbnailUrl.match(/\/([^/]+)\.[a-zA-Z]+$/);
-
+        
         if (publicIdMatch && publicIdMatch[1]) {
             const publicId = publicIdMatch[1];
             const deletedTThumbnail = await deleteFromCloudinary(publicId);
@@ -206,9 +208,6 @@ export const updateVideoById= asyncHandler(async (req, res) => {
         if (!uploadedThumbnail) {
             throw new ApiError(500, "Error uploading thumbnail");
         }
-
-
-        await fs.unlink(thumbnail);
     }
 
 

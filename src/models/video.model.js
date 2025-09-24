@@ -29,7 +29,8 @@ const videoSchema= new mongoose.Schema({
     playlist: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Playlist",
-        default: "NONE"
+        // default: "NONE"          // we cannot give default as NONE is not a valid object id
+        default: null    
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,

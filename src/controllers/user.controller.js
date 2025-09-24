@@ -2,9 +2,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
-import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import fs from "fs/promises";
 
 
 
@@ -102,7 +103,10 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
     // Now we are not going to check for the coverImage (as it is a non-compulsary field)
 
 
-
+    if(coverImageLocalPath  &&   avatarLocalPath === coverImageLocalPath)
+    {
+        throw new ApiError(400, "Avatar and Cover Image cannot be same")
+    }
 
 
 
@@ -117,9 +121,6 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
     }
     // Now we are not going to check for the coverImage (as it is a non-compulsary field)
 
-
-    if(avatarLocalPath) await fs.unlink(avatarLocalPath)         // After successful upload to Cloudinary, we are deleting the file from public/temp
-    if(coverImageLocalPath) await fs.unlink(coverImageLocalPath)         // After successful upload to Cloudinary, we are deleting the file from public/temp
 
 
     const user= await User.create({         // Now our entry has been added to our database, and the 'user' will contain the reference of this data with all the fields you have mentioned here
@@ -175,7 +176,7 @@ const registerUser= asyncHandler( async (req, res) => {     // I think yha pe 'n
 
 
 
-const generateAccessAndRefreshTokens= async (userId) => {
+export const generateAccessAndRefreshTokens= async (userId) => {
     try 
     {
         const user= await User.findById(userId)
@@ -193,7 +194,7 @@ const generateAccessAndRefreshTokens= async (userId) => {
 }
 
 
-const generateOnlyAccessToken= async (userId) => {
+export const generateOnlyAccessToken= async (userId) => {
     try 
     {
         const user= await User.findById(userId)
@@ -669,7 +670,6 @@ const getWatchHistory= asyncHandler(async (req, res) => {
 
 
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken,        // Since asyncHandler is returning a function, so registerdUser is also a function
+export {registerUser, loginUser, logoutUser, getWatchHistory,        // Since asyncHandler is returning a function, so registerdUser is also a function
     changeCurrentPassword, getCurrentUser, updateAccountDetails,
-    updateUserAvatar, updateUserCoverImage, getUserChannelProfile,
-    getWatchHistory }
+    updateUserAvatar, updateUserCoverImage, getUserChannelProfile, }
