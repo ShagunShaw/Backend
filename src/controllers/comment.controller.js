@@ -23,7 +23,7 @@ export const addCommentOnVideo= asyncHandler(async (req, res) => {
     {
         throw new ApiError(401, "You must be logged in to add comment")
     }
-    const { user }= req.user
+    const user = req.user
 
 
     const newComment= await Comment.create({
@@ -72,6 +72,12 @@ export const editComment= asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found")
     }
 
+    const comment= await Comment.findById(commentId)
+    if(!comment)
+    {
+        throw new ApiError(404, "Comment not found")
+    }
+
     const { newComment } = req.body
     if(!newComment || newComment.trim()==="")
     {
@@ -82,11 +88,16 @@ export const editComment= asyncHandler(async (req, res) => {
     {
         throw new ApiError(401, "You must be logged in to edit comment")
     }
-    const {user}= req.user
+    const user = req.user
+
+    if(user._id.toString() !== comment.owner.toString())   // Only the owner of the comment can edit the comment
+    {
+        throw new ApiError(403, "You are not authorized to edit this comment")
+    }
 
     const updatedComment= await Comment.findOneAndUpdate(
         { _id: commentId, video: videoId, owner: user._id },     // yeh 3 cheezein match krni chahiye tabhi comment update hoga
-        { content: newComment },
+        { content: newComment, isEdited: true },
         { new: true }       // yeh 'new: true' isliye likha h taaki updated comment hi return ho
     )
 
@@ -111,11 +122,23 @@ export const deleteComment= asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found")
     }
 
+    const comment= await Comment.findById(commentId)
+    if(!comment)
+    {
+        throw new ApiError(404, "Comment not found")
+    }
+
     if(!req.user)
     {
         throw new ApiError(401, "You must be logged in to delete comment")
     }
-    const { user }= req.user
+    const user = req.user
+
+
+    if(user._id.toString() !== comment.owner.toString())   // Only the owner of the comment can delete the comment
+    {
+        throw new ApiError(403, "You are not authorized to delete this comment")
+    }
 
     const deletedComment= await Comment.findOneAndDelete(
         { _id: commentId, video: videoId, owner: user._id }

@@ -1,25 +1,25 @@
 import { Subscription } from "../models/subscription.model.js";
-import { asynHandler } from "../utils/asyncHandler.js";
-import { apiResponse } from "../utils/apiResponse.js";
-import { apiError } from "../utils/apiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiError } from "../utils/apiError.js";
 
 
-export const subscribeToChannel = asynHandler(async (req, res, next) => {
+export const subscribeToChannel = asyncHandler(async (req, res, next) => {
     const { userId }= req.params
     if(!userId)
     {
-        throw new apiError(400, "User ID is missing in parameters")
+        throw new ApiError(400, "User ID is missing in parameters")
     }
 
     if(!req.user)
     {
-        throw new apiError(401, "You must be logged in to subscribe to a channel")
+        throw new ApiError(401, "You must be logged in to subscribe to a channel")
     }
     const user= req.user
 
     if(user._id.toString() === userId)
     {
-        throw new apiError(400, "You cannot subscribe to your own channel")
+        throw new ApiError(400, "You cannot subscribe to your own channel")
     }
 
     const subscribed= await Subscription.create({
@@ -29,24 +29,24 @@ export const subscribeToChannel = asynHandler(async (req, res, next) => {
 
     if(!subscribed)
     {
-        throw new apiError(500, "Could not subscribe to the channel at the moment")
+        throw new ApiError(500, "Could not subscribe to the channel at the moment")
     }
 
     res.status(201)
-       .json(apiResponse(201, subscribed, "Subscribed to the channel successfully"))
+       .json(new ApiResponse(201, subscribed, "Subscribed to the channel successfully"))
 })
 
 
-export const unsubscribeFromChannel = asynHandler(async (req, res, next) => {
+export const unsubscribeFromChannel = asyncHandler(async (req, res, next) => {
     const { userId }= req.params
     if(!userId)
     {
-        throw new apiError(400, "User ID is missing in parameters")
+        throw new ApiError(400, "User ID is missing in parameters")
     }
 
     if(!req.user)
     {
-        throw new apiError(401, "You must be logged in to unsubscribe from a channel")
+        throw new ApiError(401, "You must be logged in to unsubscribe from a channel")
     }
     const user= req.user
 
@@ -57,15 +57,15 @@ export const unsubscribeFromChannel = asynHandler(async (req, res, next) => {
 
     if(!unsubscribed)
     {
-        throw new apiError(500, "Could not unsubscribe from the channel at the moment")
+        throw new ApiError(500, "Could not unsubscribe from the channel at the moment")
     }
 
     res.status(200)
-       .json(apiResponse(200, unsubscribed, "Unsubscribed from the channel successfully"))
+       .json(new ApiResponse(200, unsubscribed, "Unsubscribed from the channel successfully"))
 })
 
 
-export const getAllSubscriptions = asynHandler(async (req, res, next) => {
+export const getAllSubscriptions = asyncHandler(async (req, res, next) => {
     const user = req.user
 
     const subscriptions = await Subscription.find({
@@ -74,11 +74,11 @@ export const getAllSubscriptions = asynHandler(async (req, res, next) => {
     .select("-password -email -createdAt -updatedAt -refreshToken")   
 
     res.status(200)
-       .json(apiResponse(200, subscriptions, "Fetched all subscriptions successfully"))
+       .json(new ApiResponse(200, subscriptions, "Fetched all subscriptions successfully"))
 })
 
 
-export const getAllSubscribersAndTheirCount = asynHandler(async (req, res, next) => {
+export const getAllSubscribersAndTheirCount = asyncHandler(async (req, res, next) => {
     const user= req.user
 
     const subscribers= await Subscription.find({
@@ -89,15 +89,15 @@ export const getAllSubscribersAndTheirCount = asynHandler(async (req, res, next)
     const count= subscribers.length
 
     res.status(200)
-       .json(apiResponse(200, { subscribers, count } , "Fetched all subscribers successfully"))
+       .json(new ApiResponse(200, { subscribers, count } , "Fetched all subscribers successfully"))
 })
 
 
-export const isSubscribed = asynHandler(async (req, res, next) => {
+export const isSubscribed = asyncHandler(async (req, res, next) => {
     const { userId }= req.params
     if(!userId)
     {
-        throw new apiError(400, "User ID is missing in parameters")
+        throw new ApiError(400, "User ID is missing in parameters")
     }
 
     const user= req.user
@@ -111,11 +111,11 @@ export const isSubscribed = asynHandler(async (req, res, next) => {
     if(!subscription)
     {
         res.status(200)
-           .json(apiResponse(200, false, "Not subscribed to the channel"))
+           .json(new ApiResponse(200, false, "Not subscribed to the channel"))
     }
     else
     {
         res.status(200)
-           .json(apiResponse(200, true, "Subscribed to the channel"))
+           .json(new ApiResponse(200, true, "Subscribed to the channel"))
     }
 })

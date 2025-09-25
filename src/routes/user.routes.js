@@ -5,7 +5,7 @@
 import { Router } from "express"
 import { registerUser, loginUser, logoutUser, changeCurrentPassword } from "../controllers/user.controller.js"
 import { getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js"
-import { getUserChannelProfile, getWatchHistory } from "../controllers/user.controller.js"
+import { getUserChannelProfile, getWatchHistory, deleteUser } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT, verifyJWT_forRefreshToken } from "../middlewares/auth.middleware.js"
 
@@ -64,6 +64,9 @@ userRouter.route("/channel/:username").get(verifyJWT, upload.none(), getUserChan
 
 userRouter.route("/history").get(verifyJWT, getWatchHistory)
 // Dekh lo yha pe shyd 'get' k saath 'upload.none()' ni likhna hoga. Let's see what our output comes.
+
+
+userRouter.route("/deleteUser").delete(verifyJWT, upload.none(), deleteUser)
 
 
 // TODO: Add a route for updating the watch history of a user, along with the new videos he watched. So basically, whenever a user watches a new video, that video should be added to his watch history.

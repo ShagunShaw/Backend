@@ -32,7 +32,7 @@ export const createPlaylist= asyncHandler(async (req, res) => {
 
 export const AddVideoToPlaylist= asyncHandler(async (req, res) => {
     const { playlistId }= req.params
-    const { user }= req.user
+    const user = req.user
     const { title, description }= req.body
 
     const playlist= await Playlist.findById(playlistId)
@@ -60,7 +60,7 @@ export const AddVideoToPlaylist= asyncHandler(async (req, res) => {
     // Now for adding a video to the playlist, we need to upload the video first in the video model. We cant directly call the upload video controller here as it can cause several issues and is not a good practice as well. We could
     // have created a service for uploading video and then used that service in both the video and playlist controllers, but that I am not doing for now. To keep things simple, we are just writing the code for uploading videos here itself and then adding the video to the playlist.
     
-    const videoFile= req.file?.videoFile?.[0]?.path
+    const videoFile= req.files?.videoFile?.[0]?.path
     const thumbnail= req.files?.thumbnail?.[0]?.path
     
     
@@ -71,16 +71,13 @@ export const AddVideoToPlaylist= asyncHandler(async (req, res) => {
     {
         throw new ApiError(500, "Error uploading video or thumbnail")
     }
-    
-
-    await fs.unlink(videoFile)         
-    await fs.unlink(thumbnail)
 
 
     const newVideo= await Video.create({
             owner: user._id,
             title,
             description,
+            playlist: playlistId,
             duration: uploadVideo.duration,       // Duration will be provided by cloudinary
             videoFile: uploadVideo.url,
             thumbnail: uploadThumbnail.url
@@ -123,9 +120,13 @@ export const deletePlaylist= asyncHandler(async (req, res) => {
     for (const video of videos) {
         // Delete video file from Cloudinary
         if (video.videoFile) {
-            const videoPublicIdMatch = video.videoFile.match(/\/([^/]+)\.[a-zA-Z]+$/);
-            if (videoPublicIdMatch && videoPublicIdMatch[1]) {
-                await deleteFromCloudinary(videoPublicIdMatch[1]);
+            const arr = video.videoFile.split("/");
+            const videoPublicIdMatch = arr[arr.length- 1].split(".")[0]
+            if (videoPublicIdMatch) {
+                const deletedVideoFromCloudinary = await deleteFromCloudinary(videoPublicIdMatch, 'video');
+                if (!deletedVideoFromCloudinary) {
+                    throw new ApiError(500, "Error deleting video from Cloudinary");
+                }
             }
         }
         else
@@ -138,7 +139,7 @@ export const deletePlaylist= asyncHandler(async (req, res) => {
         if (video.thumbnail) {
             const thumbPublicIdMatch = video.thumbnail.match(/\/([^/]+)\.[a-zA-Z]+$/);
             if (thumbPublicIdMatch && thumbPublicIdMatch[1]) {
-                await deleteFromCloudinary(thumbPublicIdMatch[1]);
+                await deleteFromCloudinary(thumbPublicIdMatch[1], 'image');
             }
         }
         else
@@ -237,7 +238,7 @@ export const removeVideoFromPlaylist= asyncHandler(async (req, res) => {
         
         if (publicIdMatch && publicIdMatch[1]) {
             const publicId = publicIdMatch[1];
-            await deleteFromCloudinary(publicId);
+            await deleteFromCloudinary(publicId, 'image');
         }
     }
     else
@@ -249,10 +250,13 @@ export const removeVideoFromPlaylist= asyncHandler(async (req, res) => {
     const videoURL= video.videoFile;
     if(videoURL)
     {
-        const publicIdMatch = videoURL.match(/\/([^/]+)\.[a-zA-Z]+$/);
-        if (publicIdMatch && publicIdMatch[1]) {
-            const publicId = publicIdMatch[1];
-            await deleteFromCloudinary(publicId);
+        const arr = video.videoFile.split("/");
+        const videoPublicIdMatch = arr[arr.length- 1].split(".")[0]
+        if (videoPublicIdMatch) {
+            const deletedVideoFromCloudinary = await deleteFromCloudinary(videoPublicIdMatch, 'video');
+            if (!deletedVideoFromCloudinary) {
+                throw new ApiError(500, "Error deleting video from Cloudinary");
+            }
         }
     }
     else
@@ -279,11 +283,6 @@ export const updatePlaylist= asyncHandler(async (req, res) => {
         throw new ApiError(400, "Playlist id is missing in params")
     }
 
-    if(playlist.owner.toString() !== user._id.toString())
-    {
-        throw new ApiError(403, "You are not authorised to update this playlist")
-    }
-
     const { title, description }= req.body
     if(!title || !description)
     {
@@ -294,6 +293,11 @@ export const updatePlaylist= asyncHandler(async (req, res) => {
     if(!playlist)
     {
         throw new ApiError(404, "Playlist with this ID not found")
+    }
+
+    if(playlist.owner.toString() !== user._id.toString())
+    {
+        throw new ApiError(403, "You are not authorised to update this playlist")
     }
 
 

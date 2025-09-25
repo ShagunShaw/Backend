@@ -28,7 +28,7 @@ export const createLikeOnComment = asyncHandler(async (req, res) => {
     const like = await Like.create({ comment: commentId, likedBy: user._id });
 
     res.status(201)
-       .json(ApiResponse(200, "Like created on comment", like));
+       .json(new ApiResponse(200, "Like created on comment", like));
 })
 
 
@@ -53,7 +53,7 @@ export const createLikeOnVideo = asyncHandler(async (req, res) => {
     const like = await Like.create({ video: videoId, likedBy: user._id });
 
     res.status(201)
-       .json(ApiResponse(200, "Like created on video", like));
+       .json(new ApiResponse(200, "Like created on video", like));
 })
 
 
@@ -78,7 +78,7 @@ export const createLikeOnTweet = asyncHandler(async (req, res) => {
     const like = await Like.create({ tweet: tweetId, likedBy: user._id });
 
     res.status(201)
-       .json(ApiResponse(200, "Like created on tweet", like));
+       .json(new ApiResponse(200, "Like created on tweet", like));
 })
 
 
@@ -107,11 +107,11 @@ export const isCommentLikedByUser = asyncHandler(async (req, res) => {
 
     if(like)
     {
-        res.status(200).json(ApiResponse(200, { liked: true }, "Comment is liked by user"));
+        res.status(200).json(new ApiResponse(200, { liked: true }, "Comment is liked by user"));
     }
     else
     {
-        res.status(200).json(ApiResponse(200, { liked: false }, "Comment is not liked by user"));
+        res.status(200).json(new ApiResponse(200, { liked: false }, "Comment is not liked by user"));
     }
 })
 
@@ -139,11 +139,11 @@ export const isVideoLikedByUser = asyncHandler(async (req, res) => {
 
     if(like)
     {
-        res.status(200).json(ApiResponse(200, { liked: true }, "Video is liked by user"));
+        res.status(200).json(new ApiResponse(200, { liked: true }, "Video is liked by user"));
     }
     else
     {
-        res.status(200).json(ApiResponse(200, { liked: false }, "Video is not liked by user"));
+        res.status(200).json(new ApiResponse(200, { liked: false }, "Video is not liked by user"));
     }
 })
 
@@ -171,11 +171,11 @@ export const isTweetLikedByUser = asyncHandler(async (req, res) => {
 
     if(like)
     {
-        res.status(200).json(ApiResponse(200, { liked: true }, "Tweet is liked by user"));
+        res.status(200).json(new ApiResponse(200, { liked: true }, "Tweet is liked by user"));
     }
     else
     {
-        res.status(200).json(ApiResponse(200, { liked: false }, "Tweet is not liked by user"));
+        res.status(200).json(new ApiResponse(200, { liked: false }, "Tweet is not liked by user"));
     }
 })
 
@@ -204,11 +204,11 @@ export const removeLikeOnComment = asyncHandler(async (req, res) => {
 
     if(like)
     {
-        res.status(200).json(ApiResponse(200, { removed: true }, "Like removed from comment"));
+        res.status(200).json(new ApiResponse(200, { removed: true }, "Like removed from comment"));
     }
     else
     {
-        res.status(200).json(ApiResponse(200, { removed: false }, "You have not liked this comment"));
+        res.status(200).json(new ApiResponse(200, { removed: false }, "You have not liked this comment"));
     }
 })
 
@@ -235,11 +235,11 @@ export const removeLikeOnVideo = asyncHandler(async (req, res) => {
 
     if(like)
     {
-        res.status(200).json(ApiResponse(200, { removed: true }, "Like removed from video"));
+        res.status(200).json(new ApiResponse(200, { removed: true }, "Like removed from video"));
     }
     else
     {
-        res.status(200).json(ApiResponse(200, { removed: false }, "You have not liked this video"));
+        res.status(200).json(new ApiResponse(200, { removed: false }, "You have not liked this video"));
     }
 })
 
@@ -266,11 +266,11 @@ export const removeLikeOnTweet = asyncHandler(async (req, res) => {
 
     if(like)
     {
-        res.status(200).json(ApiResponse(200, { removed: true }, "Like removed from tweet"));
+        res.status(200).json(new ApiResponse(200, { removed: true }, "Like removed from tweet"));
     }
     else
     {
-        res.status(200).json(ApiResponse(200, { removed: false }, "You have not liked this tweet"));
+        res.status(200).json(new ApiResponse(200, { removed: false }, "You have not liked this tweet"));
     }
 })
 
@@ -293,11 +293,11 @@ export const likeCountOnComment = asyncHandler(async (req, res) => {
     const likeCount = await Like.countDocuments({ comment: commentId });
     if(!likeCount){     // i.e. if there are no likes on this comment
         res.status(200)
-           .json(ApiResponse(200, 0 , "Like count fetched for comment"));
+           .json(new ApiResponse(200, 0 , "Like count fetched for comment"));
     }
 
     res.status(200)
-       .json(ApiResponse(200, likeCount , "Like count fetched for comment"));
+       .json(new ApiResponse(200, likeCount , "Like count fetched for comment"));
 })
 
 
@@ -317,11 +317,11 @@ export const likeCountOnVideo = asyncHandler(async (req, res) => {
     const likeCount = await Like.countDocuments({ video: videoId });
     if(!likeCount){     // i.e. if there are no likes on this video
         res.status(200)
-           .json(ApiResponse(200, 0 , "Like count fetched for video"));
+           .json(new ApiResponse(200, 0 , "Like count fetched for video"));
     }
 
     res.status(200)
-       .json(ApiResponse(200, likeCount , "Like count fetched for video"));
+       .json(new ApiResponse(200, likeCount , "Like count fetched for video"));
 })
 
 
@@ -341,9 +341,9 @@ export const likeCountOnTweet = asyncHandler(async (req, res) => {
     const likeCount = await Like.countDocuments({ tweet: tweetId });
     if(!likeCount){     // i.e. if there are no likes on this tweet
         res.status(200)
-           .json(ApiResponse(200, 0 , "Like count fetched for tweet"));
+           .json(new ApiResponse(200, 0 , "Like count fetched for tweet"));
     }
 
     res.status(200)
-       .json(ApiResponse(200, likeCount , "Like count fetched for tweet"));
+       .json(new ApiResponse(200, likeCount , "Like count fetched for tweet"));
 })

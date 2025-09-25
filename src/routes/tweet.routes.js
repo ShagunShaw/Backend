@@ -16,4 +16,5 @@ tweetRouter.route("/:tweetId/updateTweet").patch(verifyJWT, upload.single("image
 
 tweetRouter.route("/:tweetId/deleteTweet").delete(verifyJWT, upload.none(), tweetController.deleteTweetByID);
 
+
 export default tweetRouter;

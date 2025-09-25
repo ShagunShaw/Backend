@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
 import fs from "fs/promises";
 
 
@@ -670,6 +671,52 @@ const getWatchHistory= asyncHandler(async (req, res) => {
 
 
 
+
+
+
+const deleteUser= asyncHandler(async (req, res) => {
+    const user= req.user
+
+
+    // Deleting the avatar and coverImage from cloudinary as well
+    const avatarPublicIdMatch = user.avatar.match(/\/([^/]+)\.[a-zA-Z]+$/);
+    if (avatarPublicIdMatch && avatarPublicIdMatch[1]) {
+        const avatarPublicId = avatarPublicIdMatch[1];
+        const deletedAvatarFromCloudinary = await deleteFromCloudinary(avatarPublicId, 'image');
+        if (!deletedAvatarFromCloudinary) {
+            throw new ApiError(500, "Error deleting avatar from Cloudinary");
+        }
+    }
+
+    if(user.coverImage)    // coverImage is a non-compulsary field so we are checking if it's present or not
+    {
+        const coverImagePublicIdMatch = user.coverImage.match(/\/([^/]+)\.[a-zA-Z]+$/);
+        if (coverImagePublicIdMatch && coverImagePublicIdMatch[1]) {
+            const coverImagePublicId = coverImagePublicIdMatch[1];
+            const deletedCoverImageFromCloudinary = await deleteFromCloudinary(coverImagePublicId, 'image');
+            if (!deletedCoverImageFromCloudinary) {
+                throw new ApiError(500, "Error deleting cover image from Cloudinary");
+            }
+        }
+    }
+
+    const response= await User.findByIdAndDelete(user._id)
+
+    if(!response)
+    {
+        throw new ApiError(500, "Error while deleting the user")
+    }
+
+    return res.status(200)
+              .clearCookie("accessToken")
+              .clearCookie("refreshToken")
+              .json(new ApiResponse(200,
+                                    response,
+                                    "User deleted successfully"))
+})
+
+
+
 export {registerUser, loginUser, logoutUser, getWatchHistory,        // Since asyncHandler is returning a function, so registerdUser is also a function
     changeCurrentPassword, getCurrentUser, updateAccountDetails,
-    updateUserAvatar, updateUserCoverImage, getUserChannelProfile, }
+    updateUserAvatar, updateUserCoverImage, getUserChannelProfile, deleteUser}

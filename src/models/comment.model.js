@@ -7,6 +7,10 @@ const commentSchema= new Schema({     // We can also define 'Schema' like this, 
         type: String,
         required: true      // Empty string thodi na post krr skte h commment mei
     },
+    isEdited: {
+        type: Boolean,
+        default: false
+    },
     video: {
         type: Schema.Types.ObjectId,
         ref: "Video"        // Jb type 'Schema.Types.ObjectId' ho, toh 'ref' dena compulsory h

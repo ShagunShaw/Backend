@@ -11,7 +11,7 @@ const playlistSchema= new Schema({
     },
     thumbnail: {        // This thumbnail is nothing but the thumbnail of the first video in the playlist
         type: String,
-        required: true
+        default: null
     },
     videos: [
         {

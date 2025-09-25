@@ -16,16 +16,14 @@ export const createTweet = asyncHandler(async (req, res, next) => {
     let image = null;
     if(req.file)        // Making the image upload optional
     {
-        const uploadedImage= req.file.image[0].path
-
+        const uploadedImage = req.file.path
+        
         image = await uploadOnCloudinary(uploadedImage);
         if(!image){
             return next(new ApiError(400, "Image upload failed"))
-        }
-
-        fs.unlinkSync(uploadedImage)  
+        } 
     }
-
+    
     const tweet = await Tweet.create({
         owner: req.user._id,
         content,
@@ -77,22 +75,20 @@ export const updateTweetByID = asyncHandler(async (req, res, next) => {
         return next(new ApiError(400, "Content is required"))
     }
 
-    const image= null;
+    let image = null;
     if(req.file)        
     {
-        const uploadedImage= req.file.image[0].path
+        const uploadedImage = req.file.path
         image = await uploadOnCloudinary(uploadedImage);
 
         if(!image){
             return next(new ApiError(400, "Image upload failed"))
         }
 
-        fs.unlinkSync(uploadedImage)
-
         // To delete the previous image from cloudinary
         if(tweet.image){
-            const public_id = tweet.image.split("/").pop().split(".")[0];
-            await deleteFromCloudinary(public_id);
+            const public_id = tweet.image.match(/\/([^/]+)\.[a-zA-Z]+$/);
+            await deleteFromCloudinary(public_id, 'image');
         }
     }
 
@@ -124,12 +120,12 @@ export const deleteTweetByID = asyncHandler(async (req, res, next) => {
 
     // To delete the previous image from cloudinary
     if(tweet.image){
-        const public_id = tweet.image.split("/").pop().split(".")[0];
-        await deleteFromCloudinary(public_id);
+        const public_id = tweet.image.match(/\/([^/]+)\.[a-zA-Z]+$/)[1];
+        await deleteFromCloudinary(public_id, 'image');
     }
 
-    await tweet.remove();
+    const deletedTweet = await Tweet.findByIdAndDelete(tweetId);
 
     res.status(200)
-       .json(new ApiResponse(200, null, "Tweet deleted successfully"))
+       .json(new ApiResponse(200, deletedTweet, "Tweet deleted successfully"))
 })

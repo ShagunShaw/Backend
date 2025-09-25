@@ -124,23 +124,22 @@ export const deleteVideoById= asyncHandler(async (req, res) => {
     }
 
     // To delete video and thumbnail from cloudinary as well
-    const videoPublicIdMatch = video.videoFile.match(/\/v\d+\/([a-zA-Z0-9]+)\.mp4/);        // thumbnail and video file ka regex alg hoga
     const thumbnailPublicIdMatch = video.thumbnail.match(/\/([^/]+)\.[a-zA-Z]+$/);
-
-
-    if (videoPublicIdMatch && videoPublicIdMatch[1]) {
-        const videoPublicId = videoPublicIdMatch[1];
-        const deletedVideoFromCloudinary = await deleteFromCloudinary(videoPublicId);
-        if (!deletedVideoFromCloudinary) {
-            throw new ApiError(500, "Error deleting video from Cloudinary");
+    if (thumbnailPublicIdMatch && thumbnailPublicIdMatch[1]) {
+        const thumbnailPublicId = thumbnailPublicIdMatch[1];
+        const deletedThumbnailFromCloudinary = await deleteFromCloudinary(thumbnailPublicId, 'image');
+        if (!deletedThumbnailFromCloudinary) {
+            throw new ApiError(500, "Error deleting thumbnail from Cloudinary");
         }
     }
 
-    if (thumbnailPublicIdMatch && thumbnailPublicIdMatch[1]) {
-        const thumbnailPublicId = thumbnailPublicIdMatch[1];
-        const deletedThumbnailFromCloudinary = await deleteFromCloudinary(thumbnailPublicId);
-        if (!deletedThumbnailFromCloudinary) {
-            throw new ApiError(500, "Error deleting thumbnail from Cloudinary");
+
+    const arr = video.videoFile.split("/");
+    const videoPublicIdMatch = arr[arr.length- 1].split(".")[0]
+    if (videoPublicIdMatch) {
+        const deletedVideoFromCloudinary = await deleteFromCloudinary(videoPublicIdMatch, 'video');
+        if (!deletedVideoFromCloudinary) {
+            throw new ApiError(500, "Error deleting video from Cloudinary");
         }
     }
 
@@ -197,7 +196,7 @@ export const updateVideoById= asyncHandler(async (req, res) => {
         
         if (publicIdMatch && publicIdMatch[1]) {
             const publicId = publicIdMatch[1];
-            const deletedTThumbnail = await deleteFromCloudinary(publicId);
+            const deletedTThumbnail = await deleteFromCloudinary(publicId, 'image');
             if (!deletedTThumbnail) {
                 throw new ApiError(500, "Error deleting previous thumbnail, aborting update");
             }
