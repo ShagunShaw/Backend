@@ -62,7 +62,7 @@ userRouter.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), u
 userRouter.route("/channel/:username").get(verifyJWT, upload.none(), getUserChannelProfile)
 
 
-userRouter.route("/history").get(verifyJWT, getWatchHistory)
+userRouter.route("/watch-history").get(verifyJWT, getWatchHistory)
 // Dekh lo yha pe shyd 'get' k saath 'upload.none()' ni likhna hoga. Let's see what our output comes.
 
 

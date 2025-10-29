@@ -5,22 +5,20 @@ import { verifyJWT } from "../middlewares/auth.middleware.js"
 
 const likeRouter = Router();
 
+likeRouter.use(upload.none());      // Since upload.none() was used in every like controller, so instead of writing it every time, we write it here at once only
 
-likeRouter.route("/likeComment/:commentId").post(verifyJWT, upload.none(), likeController.createLikeOnComment);
-likeRouter.route("/likeVideo/:videoId").post(verifyJWT, upload.none(), likeController.createLikeOnVideo);
-likeRouter.route("/likeTweet/:tweetId").post(verifyJWT, upload.none(), likeController.createLikeOnTweet);
+likeRouter.route("/toggleCommentLike/:commentId").post(verifyJWT, likeController.toggleLikeOnComment);
+likeRouter.route("/toggleVideoLike/:videoId").post(verifyJWT, likeController.toggleLikeOnVideo);
+likeRouter.route("/toggleTweetLike/:tweetId").post(verifyJWT, likeController.toggleLikeOnTweet);
 
-likeRouter.route("/isCommentLiked/:commentId").get(verifyJWT, upload.none(), likeController.isCommentLikedByUser);
-likeRouter.route("/isVideoLiked/:videoId").get(verifyJWT, upload.none(), likeController.isVideoLikedByUser);
-likeRouter.route("/isTweetLiked/:tweetId").get(verifyJWT, upload.none(), likeController.isTweetLikedByUser);
+likeRouter.route("/isCommentLiked/:commentId").get(verifyJWT, likeController.isCommentLikedByUser);
+likeRouter.route("/isVideoLiked/:videoId").get(verifyJWT, likeController.isVideoLikedByUser);
+likeRouter.route("/isTweetLiked/:tweetId").get(verifyJWT, likeController.isTweetLikedByUser);
 
-likeRouter.route("/removeLikeOnComment/:commentId").delete(verifyJWT, upload.none(), likeController.removeLikeOnComment);
-likeRouter.route("/removeLikeOnVideo/:videoId").delete(verifyJWT, upload.none(), likeController.removeLikeOnVideo);
-likeRouter.route("/removeLikeOnTweet/:tweetId").delete(verifyJWT, upload.none(), likeController.removeLikeOnTweet);
+likeRouter.route("/getCommentLikes/:commentId").get(likeController.likeCountOnComment);
+likeRouter.route("/getVideoLikes/:videoId").get(likeController.likeCountOnVideo);
+likeRouter.route("/getTweetLikes/:tweetId").get(likeController.likeCountOnTweet);
 
-likeRouter.route("/getCommentLikes/:commentId").get(upload.none(), likeController.likeCountOnComment);
-likeRouter.route("/getVideoLikes/:videoId").get(upload.none(), likeController.likeCountOnVideo);
-likeRouter.route("/getTweetLikes/:tweetId").get(upload.none(), likeController.likeCountOnTweet);
-
+likeRouter.route("/videos").get(likeController.getLikedVideos);
 
 export default likeRouter;

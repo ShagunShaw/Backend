@@ -16,7 +16,7 @@ videoRouter.route("/get-videos-of-user/:userId").get(upload.none(), videoControl
 videoRouter.route("/get-video/:videoId").get(upload.none(), videoController.getVideoById)
 
 
-videoRouter.route("/upload-video").put(verifyJWT, upload.fields([
+videoRouter.route("/upload-video").post(verifyJWT, upload.fields([
     {
         name: "videoFile",
         maxCount: 1
@@ -33,5 +33,7 @@ videoRouter.route("/delete-video/:videoId").delete(verifyJWT, upload.none(), vid
 
 videoRouter.route("/update-video-metadata/:videoId").patch(verifyJWT, upload.single('thumbnail'), videoController.updateVideoById)
 
+
+videoRouter.route("/get-all-videos").get(upload.none(), videoController.getAllVideos);
 
 export default videoRouter;

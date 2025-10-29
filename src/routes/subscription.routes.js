@@ -5,20 +5,19 @@ import { upload } from '../middlewares/multer.middleware.js';
 
 const subscriptionRouter= Router();
 
-
-subscriptionRouter.route("/:userId/subscribe").put(verifyJWT, upload.none(), subscriptionController.subscribeToChannel);
-
-
-subscriptionRouter.route("/:userId/unsubscribe").delete(verifyJWT, upload.none(), subscriptionController.unsubscribeFromChannel);
+subscriptionRouter.use(verifyJWT, upload.none());   // Since these two fields will be required in all routes, so instead of adding them in each route individually, we are adding them here at once
 
 
-subscriptionRouter.route("/getSubscriptions").get(verifyJWT, upload.none(), subscriptionController.getAllSubscriptions);
+subscriptionRouter.route("/toggleSubscription/:userId").post(subscriptionController.toggleSubscription);
 
 
-subscriptionRouter.route("/getSubscribers").get(verifyJWT, upload.none(), subscriptionController.getAllSubscribersAndTheirCount);
+subscriptionRouter.route("/getSubscriptions").get(subscriptionController.getAllSubscriptions);
 
 
-subscriptionRouter.route("/:userId/isSubscribed").get(verifyJWT, upload.none(), subscriptionController.isSubscribed);
+subscriptionRouter.route("/getSubscribers").get(subscriptionController.getAllSubscribersAndTheirCount);
+
+
+subscriptionRouter.route("/:userId/isSubscribed").get(subscriptionController.isSubscribed);
 
 
 export default subscriptionRouter;

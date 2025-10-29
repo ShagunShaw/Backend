@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
@@ -228,20 +228,23 @@ const loginUser= asyncHandler(async (req, res) => {
     //     console.log(req.body ,"\n\n")
     //     throw new ApiError(500, "req.body is undefined")
     // }
-    const {email, username, password}= req.body       // Between username and email, the user can give only one
+    const {userIdentifier, password}= req.body       // Between username and email, the user can give only one
 
     // Now between username and email, it's compulsory that we need one. It cannot be that user ne username and email dono hi ni diya
-    if(!username  &&  !email)
+    if(!userIdentifier)
     {
-        throw new ApiError(400, "username or email is required. Koi ek toh do")
+        throw new ApiError(400, "username or email is required.")
     }
 
 
 
 
 
-    const user= await User.findOne({
-        $or: [{username}, {email}]      // i.e. agr username h toh uss basis mei user find krdo, else agr email h toh uss basis pe user find krdo
+    const user = await User.findOne({
+        $or: [
+            { email: userIdentifier },                 // match by email
+            { username: userIdentifier.toLowerCase() } // match by username (stored as lowercase on registration)
+        ]
     })
 
     if(!user)
@@ -257,7 +260,7 @@ const loginUser= asyncHandler(async (req, res) => {
 
 
 
-    const isPasswordValid= await user.isPasswordCorrect(password)     // tutorial mei yha prr bhi ek await lagaya, but I dont think it's needed. Dekh lena ek baar
+    const isPasswordValid= await user.isPasswordCorrect(password)     
     if(!isPasswordValid)
     {
         throw new ApiError(401, "Password is Incorrect")

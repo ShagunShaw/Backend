@@ -220,3 +220,122 @@ export const updateVideoById= asyncHandler(async (req, res) => {
     res.status(200)
        .json(new ApiResponse(200, updatedVideo, "Video updated successfully"))
 })
+
+
+export const getAllVideos = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+    
+   
+    const matchConditions = {
+        isPublished: true 
+    };
+    
+    
+    if (query) {
+        matchConditions.$or = [
+            { title: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } }
+        ];
+    }
+    
+    
+    if (userId) {
+        if (!isValidObjectId(userId)) {
+            throw new ApiError(400, "Invalid user ID");
+        }
+        matchConditions.owner = new mongoose.Types.ObjectId(userId);
+    }
+    
+   
+    const sortOptions = {};
+    if (sortBy && sortType) {
+        sortOptions[sortBy] = sortType === "asc" ? 1 : -1;
+    } else {
+        
+        sortOptions.createdAt = -1;
+    }
+    
+    
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+    
+    
+    const videos = await Video.aggregate([
+        {
+            $match: matchConditions
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: "$ownerDetails"
+        },
+        {
+            $sort: sortOptions
+        },
+        {
+            $skip: skip
+        },
+        {
+            $limit: limitNumber
+        },
+        {
+            $project: {
+                _id: 1,
+                videoFile: 1,
+                thumbnail: 1,
+                title: 1,
+                description: 1,
+                duration: 1,
+                views: 1,
+                isPublished: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                ownerDetails: 1
+            }
+        }
+    ]);
+    
+    // Get total count for pagination
+    const totalVideos = await Video.countDocuments(matchConditions);
+    
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalVideos / limitNumber);
+    const hasNextPage = pageNumber < totalPages;
+    const hasPrevPage = pageNumber > 1;
+    
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    videos,
+                    pagination: {
+                        currentPage: pageNumber,
+                        totalPages,
+                        totalVideos,
+                        limit: limitNumber,
+                        hasNextPage,
+                        hasPrevPage
+                    }
+                },
+                "Videos fetched successfully"
+            )
+        );
+});

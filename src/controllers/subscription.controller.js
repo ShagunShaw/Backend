@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
 
 
-export const subscribeToChannel = asyncHandler(async (req, res, next) => {
+export const toggleSubscription = asyncHandler(async (req, res, next) => {
     const { userId }= req.params
     if(!userId)
     {
@@ -17,53 +17,30 @@ export const subscribeToChannel = asyncHandler(async (req, res, next) => {
     }
     const user= req.user
 
-    if(user._id.toString() === userId)
-    {
-        throw new ApiError(400, "You cannot subscribe to your own channel")
-    }
-
-    const subscribed= await Subscription.create({
+    const subscription= await Subscription.findOne({
         subscriber: user._id,
         channel: userId
     })
 
-    if(!subscribed)
+    if(subscription)
     {
-        throw new ApiError(500, "Could not subscribe to the channel at the moment")
+        await Subscription.findOneAndDelete({
+            subscriber: user._id,
+            channel: userId
+        })
+        res.status(200)
+           .json(new ApiResponse(200, null, "Unsubscribed from the channel successfully"))
     }
-
-    res.status(201)
-       .json(new ApiResponse(201, subscribed, "Subscribed to the channel successfully"))
+    else
+    {
+        const newSubscription= await Subscription.create({
+            subscriber: user._id,
+            channel: userId
+        })
+        res.status(201)
+           .json(new ApiResponse(201, newSubscription, "Subscribed to the channel successfully"))
+    }
 })
-
-
-export const unsubscribeFromChannel = asyncHandler(async (req, res, next) => {
-    const { userId }= req.params
-    if(!userId)
-    {
-        throw new ApiError(400, "User ID is missing in parameters")
-    }
-
-    if(!req.user)
-    {
-        throw new ApiError(401, "You must be logged in to unsubscribe from a channel")
-    }
-    const user= req.user
-
-    const unsubscribed= await Subscription.findOneAndDelete({
-        subscriber: user._id,
-        channel: userId
-    })
-
-    if(!unsubscribed)
-    {
-        throw new ApiError(500, "Could not unsubscribe from the channel at the moment")
-    }
-
-    res.status(200)
-       .json(new ApiResponse(200, unsubscribed, "Unsubscribed from the channel successfully"))
-})
-
 
 export const getAllSubscriptions = asyncHandler(async (req, res, next) => {
     const user = req.user

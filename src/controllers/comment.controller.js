@@ -13,8 +13,8 @@ export const addCommentOnVideo= asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found")
     }
 
-    const { comment } = req.body
-    if(!comment || comment.trim()==="")      
+    const { content } = req.body
+    if(!content || content.trim()==="")      
     {
         throw new ApiError(400, "Comment is required")
     }
@@ -27,7 +27,7 @@ export const addCommentOnVideo= asyncHandler(async (req, res) => {
 
 
     const newComment= await Comment.create({
-        content: comment,
+        content: content,
         video: videoId,
         owner: user._id
     })
@@ -57,7 +57,7 @@ export const getAllCommentsOfVideo= asyncHandler(async (req, res) => {
                                   .sort({ createdAt: -1 })                     // Sort kr rhe h comments ko according to 'createdAt' in descending order, so that latest comment appears at the top
 
     res.status(200)
-       .json(new ApiResponse(200, comments, "Comments fetched successfully"))
+       .json(new ApiResponse(200, { comments }, "Comments fetched successfully"))
 }
 )
 
