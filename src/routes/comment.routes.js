@@ -5,7 +5,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js"
 
 const commentRouter= Router()
 
-commentRouter.route("/addComment/:videoId").put(verifyJWT, upload.none(), commentController.addCommentOnVideo)   // Here, we are using 'upload.none()' coz we are not uploading any file here, we are just sending some text data i.e. comment
+commentRouter.route("/addComment/:videoId").post(verifyJWT, upload.none(), commentController.addCommentOnVideo)   // Here, we are using 'upload.none()' coz we are not uploading any file here, we are just sending some text data i.e. comment
 
 commentRouter.route("/getComments/:videoId").get(upload.none(), commentController.getAllCommentsOfVideo)    // Here we are not using verifyJWT so that even a non-logged in user can see the comments on a video, which is possible on youtube also
 

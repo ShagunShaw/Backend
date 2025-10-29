@@ -223,11 +223,6 @@ const loginUser= asyncHandler(async (req, res) => {
     // 7) And now that  every thing is done, show success message to the user: "Successfully Logged In"
 
 
-    // if(!req.body)
-    // {
-    //     console.log(req.body ,"\n\n")
-    //     throw new ApiError(500, "req.body is undefined")
-    // }
     const {userIdentifier, password}= req.body       // Between username and email, the user can give only one
 
     // Now between username and email, it's compulsory that we need one. It cannot be that user ne username and email dono hi ni diya
