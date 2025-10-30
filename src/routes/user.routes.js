@@ -5,7 +5,7 @@
 import { Router } from "express"
 import { registerUser, loginUser, logoutUser, changeCurrentPassword } from "../controllers/user.controller.js"
 import { getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js"
-import { getUserChannelProfile, getWatchHistory, deleteUser } from "../controllers/user.controller.js"
+import { getUserChannelProfile, getWatchHistory, deleteUser, getUserById } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT, verifyJWT_forRefreshToken } from "../middlewares/auth.middleware.js"
 
@@ -67,6 +67,9 @@ userRouter.route("/watch-history").get(verifyJWT, getWatchHistory)
 
 
 userRouter.route("/deleteUser").delete(verifyJWT, upload.none(), deleteUser)
+
+
+userRouter.route("/:userId").get(upload.none(), getUserById)
 
 
 // TODO: Add a route for updating the watch history of a user, along with the new videos he watched. So basically, whenever a user watches a new video, that video should be added to his watch history.

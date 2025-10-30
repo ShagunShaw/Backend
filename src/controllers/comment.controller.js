@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { Comment } from "../models/comment.model.js"
 import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from "mongoose";
 
 
 export const addCommentOnVideo= asyncHandler(async (req, res) => {
@@ -52,9 +53,35 @@ export const getAllCommentsOfVideo= asyncHandler(async (req, res) => {
         throw new ApiError(404, "No comment exists in this video. Be the 1st one to comment");
     }
 
-    const comments = await Comment.find({ video: videoId })
-                                  .select("-video")
-                                  .sort({ createdAt: -1 })                     // Sort kr rhe h comments ko according to 'createdAt' in descending order, so that latest comment appears at the top
+    const comments = await Comment.aggregate([
+    {
+        $match: { video: new mongoose.Types.ObjectId(videoId) }
+    },
+    {
+        $lookup: {
+        from: 'users',
+        localField: 'owner',
+        foreignField: '_id',
+        as: 'ownerDetails',
+        pipeline: [
+            { $project: { avatar: 1, fullName: 1, username: 1 } }
+        ]
+        }
+    },
+    { $unwind: '$ownerDetails' },
+    {
+        $project: {
+        content: 1,
+        isEdited: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        owner: 1,
+        ownerDetails: 1,
+        video: 1      // check kro why this 'video' filed is not coming in the response
+        }
+    },
+    { $sort: { createdAt: -1 } }    // Sort comments by creation date in descending order
+    ]);                     
 
     res.status(200)
        .json(new ApiResponse(200, { comments }, "Comments fetched successfully"))
