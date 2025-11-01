@@ -5,6 +5,7 @@ import { Comment } from "../models/comment.model.js";
 import { Video } from "../models/video.model.js";
 import { Tweet } from "../models/tweet.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from 'mongoose';
 
 
 export const toggleLikeOnComment = asyncHandler(async (req, res) => {
@@ -355,7 +356,7 @@ export const getLikedVideos = asyncHandler(async (req, res) => {
         },
         {
             $sort: {
-                createdAt: -1 // Most recently liked first
+                createdAt: -1           // Most recently liked first
             }
         },
         {

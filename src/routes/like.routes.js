@@ -19,6 +19,6 @@ likeRouter.route("/getCommentLikes/:commentId").get(likeController.likeCountOnCo
 likeRouter.route("/getVideoLikes/:videoId").get(likeController.likeCountOnVideo);
 likeRouter.route("/getTweetLikes/:tweetId").get(likeController.likeCountOnTweet);
 
-likeRouter.route("/videos").get(likeController.getLikedVideos);
+likeRouter.route("/videos").get(verifyJWT, likeController.getLikedVideos);
 
 export default likeRouter;

@@ -593,9 +593,6 @@ const getUserChannelProfile= asyncHandler(async (req, res) => {
         throw new ApiError(404, "Channel does not exists")
     }
 
-    console.log(channel)        // Note: 'channel' is an array of objects (we can have multiple objects in this array but for this case we have only one)
-
-
     return res.status(200)
               .json(new ApiResponse(200,
                                     channel[0],

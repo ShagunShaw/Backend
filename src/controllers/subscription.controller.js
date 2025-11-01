@@ -45,13 +45,24 @@ export const toggleSubscription = asyncHandler(async (req, res, next) => {
 export const getAllSubscriptions = asyncHandler(async (req, res, next) => {
     const user = req.user
 
-    const subscriptions = await Subscription.find({
-        subscriber: user._id
-    }).populate("channel")      // .populate("channel") tells Mongoose to replace the channel field (which is likely an ObjectId reference to another collection, e.g., a Channel model) with the actual channel document.
-    .select("-password -email -createdAt -updatedAt -refreshToken")   
+    const subscriptions = await Subscription.find({ subscriber: user._id })
+    .populate({
+        path: "channel",
+        select: "username fullName avatar coverImage _id"
+    });
+
+    const subscriptionsWithCount = await Promise.all(
+    subscriptions.map(async (sub) => {
+        const count = await Subscription.countDocuments({ channel: sub.channel._id });
+        return {
+        ...sub.toObject(),
+        subscribersCount: count
+        };
+    })
+    );   
 
     res.status(200)
-       .json(new ApiResponse(200, subscriptions, "Fetched all subscriptions successfully"))
+       .json(new ApiResponse(200, subscriptionsWithCount, "Fetched all subscriptions successfully"))
 })
 
 

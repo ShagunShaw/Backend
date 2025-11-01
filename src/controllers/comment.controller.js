@@ -33,8 +33,18 @@ export const addCommentOnVideo= asyncHandler(async (req, res) => {
         owner: user._id
     })
 
+    await newComment.populate({
+    path: "owner",
+    select: "avatar fullName username"
+    });
+
+    const commentWithOwner = {
+    ...newComment.toObject(),
+    ownerDetails: newComment.owner
+    };
+
     res.status(201)
-       .json(new ApiResponse(201, newComment, "Comment added successfully"))
+       .json(new ApiResponse(201, commentWithOwner, "Comment added successfully"))
 })
 
 
@@ -81,7 +91,7 @@ export const getAllCommentsOfVideo= asyncHandler(async (req, res) => {
         }
     },
     { $sort: { createdAt: -1 } }    // Sort comments by creation date in descending order
-    ]);                     
+    ]);    
 
     res.status(200)
        .json(new ApiResponse(200, { comments }, "Comments fetched successfully"))
