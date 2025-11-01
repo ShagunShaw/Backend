@@ -34,6 +34,6 @@ videoRouter.route("/delete-video/:videoId").delete(verifyJWT, upload.none(), vid
 videoRouter.route("/update-video-metadata/:videoId").patch(verifyJWT, upload.single('thumbnail'), videoController.updateVideoById)
 
 
-videoRouter.route("/get-all-videos").get(upload.none(), videoController.getAllVideos);
+videoRouter.route("/get-all-videos").get(verifyJWT, upload.none(), videoController.getAllVideos);
 
 export default videoRouter;
