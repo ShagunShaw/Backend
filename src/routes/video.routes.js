@@ -13,7 +13,7 @@ videoRouter.route("/get-recommended").get(upload.none(), videoController.getVide
 videoRouter.route("/get-videos-of-user/:userId").get(upload.none(), videoController.getAllVideosOfUser)
 
 
-videoRouter.route("/get-video/:videoId").get(upload.none(), videoController.getVideoById)
+videoRouter.route("/get-video/:videoId").get(verifyJWT, upload.none(), videoController.getVideoById)
 
 
 videoRouter.route("/upload-video").post(verifyJWT, upload.fields([
@@ -26,6 +26,9 @@ videoRouter.route("/upload-video").post(verifyJWT, upload.fields([
         maxCount: 1
     }
 ]), videoController.uploadVideo)
+
+
+videoRouter.route("/trending-videos").get(upload.none(), videoController.trendingVideos)
 
 
 videoRouter.route("/delete-video/:videoId").delete(verifyJWT, upload.none(), videoController.deleteVideoById)

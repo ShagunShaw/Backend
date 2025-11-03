@@ -654,14 +654,44 @@ const getWatchHistory= asyncHandler(async (req, res) => {
         }
     ])      // Ask gpt to give an example of what the output will look like
 
-    console.log("\nYour entire user details is ", user)
-    console.log("\n\nAnd just your user's watch history is ", user, "\n\n")
-
     return res.status(200)
               .json(new ApiResponse(200,
                                     user[0].watchHistory,   // Bekar mei pura user info bhjne k jgh hmlog uska sirf watch history hi bhjre h (and eventually that's what needed)
                                     `Watch history of ${user[0].username} fetched successfully`                      
                                    ))
+})
+
+
+
+const removeVideoFromWatchHistory= asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    const user= req.user
+
+    user.watchHistory= user.watchHistory.filter( (videoObjectId) => {
+        return videoObjectId.toString() !== videoId       // 'videoObjectId' is of type ObjectId, so we are converting it to string for comparison
+    } )
+
+    const response= await user.save({validateBeforeSave: false})      
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    response,
+                                    "Video removed from watch history successfully"))
+})
+
+
+
+const clearWatchHistory= asyncHandler(async (req, res) => {
+    const user= req.user
+
+    user.watchHistory= []      // simply emptying the array
+
+    const response= await user.save({validateBeforeSave: false})
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    response,
+                                    "Watch history cleared successfully"))
 })
 
 
@@ -711,6 +741,9 @@ const deleteUser= asyncHandler(async (req, res) => {
 })
 
 
+
+
+
 const getUserById = asyncHandler(async (req, res) => {
     const { userId } = req.params
 
@@ -729,7 +762,26 @@ const getUserById = asyncHandler(async (req, res) => {
 
 
 
+
+const getUserByChannel = asyncHandler(async (req, res) => {
+    const { channelName } = req.params
+
+    const user = await User.findOne({ fullName: { $regex: `^${channelName}$`, $options: "i" } })
+                              .select("username")
+
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    user,
+                                    "User fetched successfully"))
+})
+
+
+
 export {registerUser, loginUser, logoutUser, getWatchHistory,        // Since asyncHandler is returning a function, so registerdUser is also a function
     changeCurrentPassword, getCurrentUser, updateAccountDetails,
-    updateUserAvatar, updateUserCoverImage, getUserChannelProfile, 
-    deleteUser, getUserById}
+    updateUserAvatar, updateUserCoverImage, getUserChannelProfile, clearWatchHistory,
+    deleteUser, getUserById, getUserByChannel, removeVideoFromWatchHistory}

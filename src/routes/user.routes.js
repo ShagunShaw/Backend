@@ -5,7 +5,8 @@
 import { Router } from "express"
 import { registerUser, loginUser, logoutUser, changeCurrentPassword } from "../controllers/user.controller.js"
 import { getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js"
-import { getUserChannelProfile, getWatchHistory, deleteUser, getUserById } from "../controllers/user.controller.js"
+import { getUserChannelProfile, getWatchHistory, deleteUser, getUserById, getUserByChannel } from "../controllers/user.controller.js"
+import { removeVideoFromWatchHistory, clearWatchHistory } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT, verifyJWT_forRefreshToken } from "../middlewares/auth.middleware.js"
 
@@ -59,17 +60,23 @@ userRouter.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), u
 
 
 // This one is new (as now we are sending the encoded url in this route). See this one
-userRouter.route("/channel/:username").get(verifyJWT, upload.none(), getUserChannelProfile)
+userRouter.route("/channel/:username").get(upload.none(), getUserChannelProfile)
 
 
 userRouter.route("/watch-history").get(verifyJWT, getWatchHistory)
-// Dekh lo yha pe shyd 'get' k saath 'upload.none()' ni likhna hoga. Let's see what our output comes.
+                                  .delete(verifyJWT, upload.none(), clearWatchHistory)
+
+
+userRouter.route("/watch-history/:videoId").delete(verifyJWT, upload.none(), removeVideoFromWatchHistory)
 
 
 userRouter.route("/deleteUser").delete(verifyJWT, upload.none(), deleteUser)
 
 
 userRouter.route("/:userId").get(upload.none(), getUserById)
+
+
+userRouter.route("/channelName/:channelName").get(upload.none(), getUserByChannel)
 
 
 // TODO: Add a route for updating the watch history of a user, along with the new videos he watched. So basically, whenever a user watches a new video, that video should be added to his watch history.

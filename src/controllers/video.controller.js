@@ -1,6 +1,7 @@
 import {  asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js"
@@ -13,7 +14,7 @@ export const getVideosByRecommendation= asyncHandler(async (req, res) => {
 
 export const getAllVideosOfUser= asyncHandler(async (req, res) => {
     const { userId }= req.params
-
+    
     if(!userId)
     {
         throw new ApiError(400, "User id is required")
@@ -33,6 +34,7 @@ export const getAllVideosOfUser= asyncHandler(async (req, res) => {
 
 export const getVideoById= asyncHandler(async (req, res) => {
     const { videoId }= req.params
+    const user= req.user
 
     if(!videoId)
     {
@@ -45,8 +47,55 @@ export const getVideoById= asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video of this ID not found")
     }
 
+    video.views += 1;
+    await video.save();
+
+    const vidIdStr = video._id.toString();
+    user.watchHistory = user.watchHistory.filter(id => id.toString() !== vidIdStr);
+
+    user.watchHistory.unshift(video._id);
+    await user.save()
+
     res.status(200)
        .json(new ApiResponse(200, video, "Video fetched successfully"))
+})
+
+
+export const trendingVideos= asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+
+    const pageNumber = parseInt(page, 10) || 1;
+    const limitNumber = parseInt(limit, 10) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // fetch paginated videos
+    const videosList = await Video.find()
+        .sort({ views: -1 })        
+        .skip(skip)
+        .limit(limitNumber);
+
+    // pagination meta
+    const totalVideos = await Video.countDocuments();
+    const totalPages = Math.ceil(totalVideos / limitNumber);
+    const hasNextPage = pageNumber < totalPages;
+    const hasPrevPage = pageNumber > 1;
+
+    const pagination = {
+        currentPage: pageNumber,
+        totalPages,
+        totalVideos,
+        limit: limitNumber,
+        hasNextPage,
+        hasPrevPage
+    };
+
+    // ensure the variable named `videos` is the object your frontend expects
+    const videos = {
+        videos: videosList,
+        pagination
+    };
+
+    return res.status(200).json(new ApiResponse(200, videos, "Videos fetched successfully"));
 })
 
 
