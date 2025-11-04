@@ -4,7 +4,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - CORS_ORIGIN=http://localhost:80
+        # though 'http://localhost' maps to 'http://localhost:80' in the browser, we cant use 'http://localhost:80' here as nginx expects just the origin without port 80
+      - CORS_ORIGIN=http://localhost
 
   frontend:
     build: ../ViroNex Frontend
@@ -12,3 +13,7 @@ services:
       - "80:80"
     depends_on:
       - backend
+
+# TL;DR:
+# If we changed the code only → 'docker-compose up' is fine.
+# But if we changed Dockerfile or config files → run 'docker-compose build' first then 'docker-compose up'.
