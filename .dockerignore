@@ -1,0 +1,12 @@
+.vscode/
+node_modules/
+
+# We can write it either way — .git or .git/ — and it will work the same in .dockerignore
+.git
+.gitignore
+.prettierrc
+.prettierignore
+
+README.md
+
+doubts.txt

@@ -8,7 +8,7 @@
 
 import {v2 as cloudinary} from "cloudinary"
 import fs from "fs"     // default package in npm used for file-handling
-import { ApiError } from "../utils/apiError.js";
+import { ApiError } from "../utils/ApiError.js";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,          // You can also write it like this `${process.env.CLOUDINARY_CLOUD_NAME}`, but it's just unnecessarily extra work, we generally write like this when we're embedding them within a larger string
