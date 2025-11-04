@@ -1,11 +1,10 @@
-# ViroNex Backend API Documentation
+# ClipHive Backend API Documentation
 
 ---
 
 ## 🔗 Base Configuration
 
 ```
-Base URL:https://vironex.onrender.com
 Environment: Development
 Content-Type: application/json (default)
 Content-Type: multipart/form-data (file uploads)
