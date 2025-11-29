@@ -6,7 +6,8 @@ import { Router } from "express"
 import { registerUser, loginUser, logoutUser, changeCurrentPassword } from "../controllers/user.controller.js"
 import { getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js"
 import { getUserChannelProfile, getWatchHistory, deleteUser, getUserById, getUserByChannel } from "../controllers/user.controller.js"
-import { removeVideoFromWatchHistory, clearWatchHistory } from "../controllers/user.controller.js"
+import { removeVideoFromWatchHistory, clearWatchHistory, getWatchLater, clearWatchLater } from "../controllers/user.controller.js"
+import { removeVideoFromWatchLater, addToWatchLater, isVideoSaved } from "../controllers/user.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT, verifyJWT_forRefreshToken } from "../middlewares/auth.middleware.js"
 
@@ -68,6 +69,17 @@ userRouter.route("/watch-history").get(verifyJWT, getWatchHistory)
 
 
 userRouter.route("/watch-history/:videoId").delete(verifyJWT, upload.none(), removeVideoFromWatchHistory)
+
+
+userRouter.route("/watch-later").get(verifyJWT, getWatchLater)
+                                .delete(verifyJWT, upload.none(), clearWatchLater)    
+
+
+userRouter.route("/watch-later/:videoId").delete(verifyJWT, upload.none(), removeVideoFromWatchLater)
+                                         .post(verifyJWT, upload.none(), addToWatchLater)   
+
+
+userRouter.route("/isSaved/:videoId").get(verifyJWT, isVideoSaved)
 
 
 userRouter.route("/deleteUser").delete(verifyJWT, upload.none(), deleteUser)

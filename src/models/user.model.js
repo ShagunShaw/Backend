@@ -37,6 +37,12 @@ const userSchema= new mongoose.Schema({
             ref: "Video"
         }
     ],
+    watchLater: [
+        {
+            type: mongoose.Schema.Types.ObjectId,       
+            ref: "Video"
+        }
+    ],
     password: {
         type: String,            // Will not store the password directly, but in encrypted form which will be encrypted by us only
         required: [true, "Password is required"]        // If the password is missing, then Mongoose will throw this validation error "Password is required"

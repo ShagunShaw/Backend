@@ -696,6 +696,131 @@ const clearWatchHistory= asyncHandler(async (req, res) => {
 
 
 
+const getWatchLater= asyncHandler(async (req, res) => {
+        const user= await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)      // Why are writing like this instead of just 'req.user._id'. Now for the answer refer to video lecture 21 from 5.00 to 8.00 timestamp. It's interesting
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchLater",
+                foreignField: "_id",
+                as: "watchLater",     // will overwrite our 'watchLater' field. I.e. jo 'watchLater' field mei phle sirf '_id' th, usme ab uss '_id' ka reference waale video ka pura detail hoga
+                pipeline: [     // creating a sub-pipeline for our new 'watchLater' column
+                    {
+                        $lookup: {      // Creating a 'sub-join' inside this bigger 'join'
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner", 
+                            pipeline: [     // Creating a sub-pipeline for our new 'owner' field
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1,
+                                        // password: 0,
+                                        // refreshToken: 0
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"        // get the first element of this 'owner' field as the 'owner' field is an array of objects, and in our case it has only one element in it
+                            }
+                        }
+                    }
+                ]
+                // , pipeline: [.....]      // We can also write multiple pipelines for the same field like this, or we can create a nested pipeline as we had done above
+            }
+        }
+    ])      // Ask gpt to give an example of what the output will look like
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    user[0].watchLater,   // Bekar mei pura user info bhjne k jgh hmlog uska sirf watch history hi bhjre h (and eventually that's what needed)
+                                    `Watch later of ${user[0].username} fetched successfully`                      
+                                   ))
+})
+
+
+
+const clearWatchLater= asyncHandler(async (req, res) => {
+    const user= req.user
+
+    user.watchLater= []      
+
+    const response= await user.save({validateBeforeSave: false})
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    response,
+                                    "Watch later cleared successfully"))
+})
+
+
+const addToWatchLater= asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    const user= req.user
+
+    // Check if the video is already present in watch later or not
+    const isVideoAlreadyPresent= user.watchLater.find( (videoObjectId) => {
+        return videoObjectId.toString() === videoId       
+    } )
+
+    let response= user
+    if(!isVideoAlreadyPresent)
+    {
+        user.watchLater.push( new mongoose.Types.ObjectId(videoId) )      // Pushing the videoObjectId to the watchLater array
+
+        response= await user.save({validateBeforeSave: false})
+    }
+
+    return res.status(200)
+                  .json(new ApiResponse(200,
+                                        response,
+                                        isVideoAlreadyPresent ? "Video already present in watch later" : "Video added to watch later successfully"))
+})
+
+
+
+const isVideoSaved= asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    const user= req.user
+
+    const isVideoAlreadyPresent= user.watchLater.find( (videoObjectId) => {
+        return videoObjectId.toString() === videoId       
+    } )
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    isVideoAlreadyPresent,
+                                    "Video saved status fetched successfully"))
+})
+
+
+
+const removeVideoFromWatchLater= asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    const user= req.user
+
+    user.watchLater= user.watchLater.filter( (videoObjectId) => {
+        return videoObjectId.toString() !== videoId       
+    } )
+
+    const response= await user.save({validateBeforeSave: false})      
+
+    return res.status(200)
+              .json(new ApiResponse(200,
+                                    response,
+                                    "Video removed from watch later successfully"))
+})
 
 
 
@@ -784,4 +909,5 @@ const getUserByChannel = asyncHandler(async (req, res) => {
 export {registerUser, loginUser, logoutUser, getWatchHistory,        // Since asyncHandler is returning a function, so registerdUser is also a function
     changeCurrentPassword, getCurrentUser, updateAccountDetails,
     updateUserAvatar, updateUserCoverImage, getUserChannelProfile, clearWatchHistory,
-    deleteUser, getUserById, getUserByChannel, removeVideoFromWatchHistory}
+    deleteUser, getUserById, getUserByChannel, removeVideoFromWatchHistory,
+    getWatchLater, clearWatchLater, removeVideoFromWatchLater, addToWatchLater, isVideoSaved}
